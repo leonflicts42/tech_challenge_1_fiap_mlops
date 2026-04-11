@@ -207,3 +207,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# MLflow — artefatos binários não vão para o repositório
+mlartifacts/
+mlruns/
+
+# banco SQLite do MLflow — vai para o repositório (leve, rastreia metadata)
+!mlflow.db

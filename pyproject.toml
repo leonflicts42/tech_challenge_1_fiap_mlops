@@ -1,9 +1,9 @@
 [project]
 name = "churn-prediction"
 version = "0.1.0"
-description = "Add your description here"
+description = "Churn prediction for telecom"
 readme = "README.md"
-requires-python = ">=3.10.20"
+requires-python = ">=3.10"
 dependencies = [
     "mlflow>=3.0.0,<4.0.0",
     "pydantic>=2.8.0,<3.0.0",
@@ -18,4 +18,15 @@ dependencies = [
     "ipywidgets>=8.1.8",
     "openpyxl>=3.1.5",
     "seaborn>=0.13.2",
+    "scipy>=1.15.3",
+    "statsmodels>=0.14.6",
+    "pylance>=4.0.0",
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["churn_telecom*"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
