@@ -78,16 +78,28 @@ def get_logger(notebook_name: str) -> logging.Logger:
     return logger
 
 import mlflow
+from pathlib import Path
 
 # ── MLflow ────────────────────────────────────────────────────────────────────
 MLFLOW_TRACKING_URI = f"sqlite:///{PROJECT_ROOT / 'mlflow.db'}"
-MLFLOW_ARTIFACT_URI = str(PROJECT_ROOT / "mlartifacts")
+MLFLOW_ARTIFACT_URI = (PROJECT_ROOT / "mlartifacts").as_uri()  # file:///C:/...
 MLFLOW_EXPERIMENT   = "churn-telecom"
+
+# logger interno do módulo config — independente dos notebooks
+_logger = logging.getLogger(__name__)
 
 def setup_mlflow() -> None:
     """Configura tracking URI, artifact URI e cria o experimento se não existir."""
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+    experiment = mlflow.get_experiment_by_name(MLFLOW_EXPERIMENT)
+    if experiment is None:
+        mlflow.create_experiment(
+            name=MLFLOW_EXPERIMENT,
+            artifact_location=MLFLOW_ARTIFACT_URI,
+        )
     mlflow.set_experiment(MLFLOW_EXPERIMENT)
-    logger.info("MLflow tracking URI : %s", MLFLOW_TRACKING_URI)
-    logger.info("MLflow experiment   : %s", MLFLOW_EXPERIMENT)
-    logger.info("MLflow artifact URI : %s", MLFLOW_ARTIFACT_URI)
+
+    _logger.info("MLflow tracking URI : %s", MLFLOW_TRACKING_URI)
+    _logger.info("MLflow experiment   : %s", MLFLOW_EXPERIMENT)
+    _logger.info("MLflow artifact URI : %s", MLFLOW_ARTIFACT_URI)
