@@ -20,6 +20,8 @@ DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
 REPORTS_FIGURES = PROJECT_ROOT / "reports" / "figures"
 MODELS_DIR     = PROJECT_ROOT / "models"
 
+
+
 # ── Paleta de cores — padrão visual do projeto ────────────────────────────────
 CORES = {
     "primaria":   "skyblue",
@@ -103,3 +105,18 @@ def setup_mlflow() -> None:
     _logger.info("MLflow tracking URI : %s", MLFLOW_TRACKING_URI)
     _logger.info("MLflow experiment   : %s", MLFLOW_EXPERIMENT)
     _logger.info("MLflow artifact URI : %s", MLFLOW_ARTIFACT_URI)
+    
+# Número esperado de linhas no raw — usado para validação de shape
+# Constantes para conferencia da conformidade do dataset original
+DATA_ROWS = 7043
+DATA_COLS = 33
+
+
+def to_snake_case(name: str) -> str:
+    """Padroniza nome de coluna para snake_case."""
+    return (
+        name.strip()
+        .lower()
+        .replace(" ", "_")
+        .replace("-", "_")
+    )

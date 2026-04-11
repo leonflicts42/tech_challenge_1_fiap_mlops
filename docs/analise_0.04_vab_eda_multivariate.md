@@ -1,95 +1,33 @@
-O que isso faz (nível profissional)
-📊 1. Heatmap
-Visual geral de dependência
-Identifica padrões visuais
-🎯 2. Correlação com target
+# 📊 Análise Multivariada e de Multicolinearidade
 
-Você descobre:
+Esta fase da análise exploratória ultrapassa a descrição individual das variáveis para investigar como elas interagem entre si e, fundamentalmente, como explicam o fenómeno do **Churn**. O foco aqui é garantir a estabilidade do modelo e eliminar redundâncias que possam inflar métricas ou instabilizar os pesos da Rede Neural (MLP).
 
-Variáveis mais relevantes
-Direção da relação
-⚠️ 3. Multicolinearidade (corr > 0.7)
+## 1. Correlação com o Target (Sinal Preditivo)
+A análise de correlação de Pearson revelou a hierarquia de influência das variáveis numéricas sobre a variável alvo:
 
-Problema:
+* **Tenure Months (-0.3522):** Apresenta a correlação mais forte (moderada e negativa). Isto confirma que quanto maior o tempo de permanência do cliente, menor a probabilidade de churn. É o principal "âncora" de retenção no dataset.
+* **Total Charges (-0.1995):** Correlação fraca/moderada negativa. Embora pareça relevante, o seu sinal é derivado diretamente do tempo de casa.
+* **Monthly Charges (0.1934):** Correlação positiva. Indica que faturas mais elevadas tendem a impulsionar o cancelamento, sugerindo uma sensibilidade ao preço por parte dos utilizadores.
 
-Modelos lineares instáveis
-Interpretação ruim
-🔥 4. VIF (nível banco / indústria)
-VIF	Interpretação
-1	ok
-5+	atenção
-10+	problema sério
+## 2. O Problema da Multicolinearidade (VIF & Redundância)
+A análise multivariada detetou uma relação estrutural que pode prejudicar a performance do modelo se não for tratada:
 
-🧠 1. COMO INTERPRETAR SEU LOG (correlação + VIF)
-📊 Correlação com TARGET
-tenure | corr_target=-0.35
-monthly_charges | corr_target=0.19
-👉 Interpretação:
-|corr| < 0.1 → irrelevante
-0.1 – 0.3 → fraca (mas útil)
-0.3 – 0.5 → moderada
-> 0.5 → forte
+* **Alta Correlação Detetada:** O par **Tenure Months vs Total Charges** apresenta uma correlação de **0.8259**.
+    * **Explicação:** Esta é uma relação matemática óbvia — o valor total pago é, em grande parte, o produto do tempo de contrato pelo valor mensal. Ter ambas as variáveis no modelo é fornecer a mesma informação duas vezes.
+* **Variance Inflation Factor (VIF):**
+    * **Total Charges (8.0792):** Valor elevado (próximo do limite crítico de 10). Indica que esta variável é altamente explicada pelas outras.
+    * **Tenure Months (6.3324):** Valor de atenção, inflado pela sua ligação com o custo total.
+    * **Monthly Charges (3.3611):** Nível saudável, indicando que traz informação única ao modelo.
 
-✔ No churn:
+## 3. Descobertas Vitais para o Avanço do Problema
+* **Redundância Estrutural:** A variável **Total Charges** não adiciona valor incremental significativo à predição que já não esteja contido em **Tenure** e **Monthly Charges**. Manter variáveis com VIF alto pode tornar os gradientes da MLP instáveis durante o treino.
+* **Predominância Categórica:** Embora as variáveis numéricas forneçam o "motor" do modelo, a teoria de domínio em Telecomunicações indica que o comportamento decisório (Churn) é dominado por variáveis categóricas como **Contract** e **Internet Service**.
 
-tenure geralmente é muito relevante (negativo)
-monthly_charges → impacto positivo moderado
-⚠️ Multicolinearidade (corr entre features)
-tenure vs total_charges | corr=0.85
-👉 Interpretação:
+## 4. Insights e Próximas Etapas (Feature Selection)
+Com base nos logs, as seguintes decisões técnicas serão aplicadas na construção do pipeline:
 
-0.7 → risco de redundância
+* **Estratégia de Descarte:** Recomenda-se a **remoção de Total Charges**. Ao remover esta variável, o VIF de **Tenure Months** cairá drasticamente, isolando o seu efeito real e purificando o sinal enviado à Rede Neural.
+* **Foco na Engenharia de Categóricas:** Dado que as numéricas têm correlações moderadas, o sucesso do **F1-Score** dependerá de como transformamos as variáveis categóricas (**One-Hot Encoding** para serviços e **Ordinal** para contratos).
+* **Preparação para a MLP:** Como as Redes Neurais tratam bem interações não-lineares, a manutenção de **Tenure** e **Monthly Charges** (devidamente normalizados) permitirá que a rede aprenda a relação complexa que **Total Charges** tentava representar de forma linear e redundante.
 
-0.9 → praticamente duplicadas
-
-✔ No seu dataset:
-
-total_charges ≈ tenure × monthly_charges
-
-👉 Isso NÃO é erro — é relação estrutural
-
-🔥 VIF (o mais importante)
-total_charges | VIF=12.4 (ALTO)
-tenure | VIF=6.2 (MODERADO)
-monthly_charges | VIF=3.1 (OK)
-👉 Interpretação:
-VIF	Ação
-< 5	ok
-5–10	atenção
-> 10	remover ou tratar
-🎯 Decisão prática
-
-👉 Regra de ouro:
-
-Se duas variáveis são altamente correlacionadas:
-
-mantenha a mais interpretável
-ou a mais preditiva
-
-✔ Exemplo real:
-
-manter tenure
-remover total_charges
-
-🎯 3. O que você DEVE fazer (nível indústria)
-✔ Feature selection simples e correta
-Remover: TotalCharges
-Manter: tenure, monthly_charges
-
-✔ Focar no que realmente importa
-📊 Variáveis categóricas (muito mais importantes)
-
-No dataset Telco:
-
-Contract 🔥
-Internet Service 🔥
-Payment Method 🔥
-
-👉 essas têm MUITO mais poder que numéricas
-
-🧠 Insight nível senior
-
-👉 Em churn de telco:
-
-numéricas → ajudam
-categóricas → dominam o modelo
+**Conclusão desta Fase:** O dataset está pronto para a etapa de pré-processamento. A limpeza de redundâncias (Multicolinearidade) garantirá um modelo mais enxuto, interpretável e com melhor capacidade de generalização para a API de inferência.
