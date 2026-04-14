@@ -22,6 +22,7 @@ dependencies = [
     "statsmodels>=0.14.6",
     "pylance>=4.0.0",
     "imbalanced-learn>=0.14.1",
+    "ruff>=0.15.10",
 ]
 
 [tool.setuptools.packages.find]
