@@ -26,6 +26,7 @@ dependencies = [
     "nbstripout>=0.9.1",
     "torch>=2.11.0",
     "setuptools>=81.0.0",
+    "pytest>=9.0.3",
 ]
 
 [tool.setuptools.packages.find]
@@ -36,7 +37,4 @@ include = ["churn_telecom*"]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-[dependency-groups]
-dev = [
-    "ruff>=0.15.10",
-]
+

@@ -228,3 +228,38 @@ CV_N_SPLITS: int = 5
 # ── Custos de negócio (trade-off FP × FN) ─────────────────────────────────────
 COST_FN: float = 500.0   # cliente perdido sem tentativa de retenção
 COST_FP: float = 50.0    # campanha de retenção desperdiçada
+
+"""
+config_patch.py — colar ao FINAL da classe/dataclass existente em churn_telecom/config.py
+
+Adiciona os blocos de configuração para MLP e Validação Cruzada.
+NÃO substitua o config.py inteiro; cole apenas estas linhas.
+"""
+
+# ── MLP ──────────────────────────────────────────────────────────────────────
+# Arquitetura
+MLP_HIDDEN_DIMS: list[int] = [128, 64, 32]
+MLP_DROPOUT: float = 0.3
+
+# Otimização
+MLP_LR: float = 1e-3
+MLP_WEIGHT_DECAY: float = 1e-4
+MLP_EPOCHS: int = 100
+MLP_BATCH_SIZE: int = 256
+
+# Early stopping
+MLP_PATIENCE: int = 10
+MLP_MIN_DELTA: float = 1e-4
+
+# Device
+MLP_DEVICE: str = "cpu"   # trocar para "cuda" se GPU disponível
+
+# ── Validação Cruzada ─────────────────────────────────────────────────────────
+CV_N_SPLITS: int = 5
+CV_RANDOM_STATE: int = 42
+
+# ── Custo de Negócio (Etapa 2) ────────────────────────────────────────────────
+COST_CLV: float = 1_200.0      # R$ — receita anual média por cliente
+COST_RETENTION: float = 80.0   # R$ — custo de ação de retenção
+COST_FP: float = 80.0          # R$ — custo de abordar cliente que não ia sair
+COST_FN: float = 1_200.0       # R$ — custo de perder cliente que ia sair

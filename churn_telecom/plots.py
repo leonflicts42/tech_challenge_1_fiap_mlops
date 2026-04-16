@@ -158,66 +158,81 @@ def save_threshold_f1_recall(
     return path
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PATCH para churn_telecom/plots.py
-#
-# Adicione esta função ao final do arquivo. Mantém o padrão das demais:
-# Path absoluto, dpi=120, plt.close(fig), logger.info no fim.
-# ─────────────────────────────────────────────────────────────────────────────
+"""
+plots_patch.py — colar ao FINAL de churn_telecom/plots.py
+
+Adiciona a função save_training_curves ao módulo de plots existente.
+NÃO substitua o arquivo inteiro; apenas cole este bloco ao final.
+"""
+
 
 
 def save_training_curves(
-    history: dict[str, list[float]],
-    path: Path,
-    monitor_metric: str = "val_pr_auc",
-    title: str = "Training Curves",
-) -> Path:
-    """Salva curvas de treino da MLP em PNG (loss + métrica monitorada).
-
-    Parâmetros
-    ----------
-    history         : dict com chaves "train_loss", "val_loss" e a métrica monitorada.
-                      Cada valor é a lista de medições por época.
-    path            : caminho de saída do PNG.
-    monitor_metric  : nome da métrica usada em early stopping (eixo direito).
-    title           : título global da figura.
+    train_losses: list[float],
+    val_losses: list[float],
+    output_path: Path | str,
+    train_aucs: list[float] | None = None,
+    val_aucs: list[float] | None = None,
+    best_epoch: int | None = None,
+) -> None:
     """
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    Gera e salva o gráfico de curvas de treinamento (loss e opcionalmente AUC).
 
-    epochs = range(1, len(history["train_loss"]) + 1)
+    Parameters
+    ----------
+    train_losses : lista de perdas por época (treino)
+    val_losses   : lista de perdas por época (validação)
+    output_path  : caminho de saída da imagem (ex.: 'models/training_curves.png')
+    train_aucs   : AUC-ROC por época no treino (opcional)
+    val_aucs     : AUC-ROC por época na validação (opcional)
+    best_epoch   : época do melhor checkpoint (marcada com linha vertical)
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    fig, ax_loss = plt.subplots(figsize=(8, 4))
+    has_auc = train_aucs is not None and val_aucs is not None
+    n_plots = 2 if has_auc else 1
+    epochs = np.arange(1, len(train_losses) + 1)
 
-    # Eixo esquerdo: losses
-    ax_loss.plot(epochs, history["train_loss"], label="train_loss", color="steelblue")
-    ax_loss.plot(epochs, history["val_loss"], label="val_loss", color="coral")
+    fig, axes = plt.subplots(1, n_plots, figsize=(6 * n_plots, 4))
+    if n_plots == 1:
+        axes = [axes]
+
+    # ── Loss ────────────────────────────────────────────────────────────────
+    ax_loss = axes[0]
+    ax_loss.plot(epochs, train_losses, label="train loss", linewidth=1.8)
+    ax_loss.plot(epochs, val_losses, label="val loss", linewidth=1.8, linestyle="--")
+    if best_epoch is not None:
+        ax_loss.axvline(
+            best_epoch, color="red", linestyle=":", linewidth=1.2,
+            label=f"best epoch ({best_epoch})"
+        )
     ax_loss.set_xlabel("Época")
-    ax_loss.set_ylabel("Loss (BCE)")
+    ax_loss.set_ylabel("BCE Loss")
+    ax_loss.set_title("Curva de Loss")
+    ax_loss.legend(fontsize=9)
     ax_loss.grid(alpha=0.3)
 
-    # Eixo direito: métrica monitorada
-    if monitor_metric in history and len(history[monitor_metric]) > 0:
-        ax_metric = ax_loss.twinx()
-        ax_metric.plot(
-            epochs,
-            history[monitor_metric],
-            label=monitor_metric,
-            color="dimgray",
-            linestyle="--",
-        )
-        ax_metric.set_ylabel(monitor_metric)
+    # ── AUC ─────────────────────────────────────────────────────────────────
+    if has_auc:
+        ax_auc = axes[1]
+        ax_auc.plot(epochs, train_aucs, label="train AUC", linewidth=1.8)
+        ax_auc.plot(epochs, val_aucs, label="val AUC", linewidth=1.8, linestyle="--")
+        if best_epoch is not None:
+            ax_auc.axvline(
+                best_epoch, color="red", linestyle=":", linewidth=1.2,
+                label=f"best epoch ({best_epoch})"
+            )
+        ax_auc.set_xlabel("Época")
+        ax_auc.set_ylabel("ROC-AUC")
+        ax_auc.set_title("Curva de AUC-ROC")
+        ax_auc.set_ylim(0.4, 1.02)
+        ax_auc.legend(fontsize=9)
+        ax_auc.grid(alpha=0.3)
 
-        lines_l, labels_l = ax_loss.get_legend_handles_labels()
-        lines_r, labels_r = ax_metric.get_legend_handles_labels()
-        ax_loss.legend(lines_l + lines_r, labels_l + labels_r, loc="best")
-    else:
-        ax_loss.legend(loc="best")
-
-    ax_loss.set_title(title)
+    fig.suptitle("Histórico de Treinamento — ChurnMLP", fontsize=11, y=1.02)
     fig.tight_layout()
-    fig.savefig(path, dpi=120)
+    fig.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
-    logger.info("Training curves salvas em: %s", path)
-    return path
+    logger.info("save_training_curves | salvo em %s", output_path)
