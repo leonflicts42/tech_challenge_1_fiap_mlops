@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import mlflow
+import torch
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -91,6 +92,7 @@ COLS_POS = [
 ]
 
 TARGET = "Churn Value"
+TARGET_COL = "churn_value"
 LABEL_COL = "Churn Label"
 
 # ── MLflow ────────────────────────────────────────────────────────────────────
@@ -207,3 +209,22 @@ def log_dataset_to_mlflow(
         X.shape[1],
         md5,
     )
+
+# ── PyTorch / MLP ──────────────────────────────────────────────────────────────
+DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
+
+MLP_HIDDEN_DIMS: list[int] = [64, 32]
+MLP_DROPOUT: float = 0.3
+MLP_LR: float = 1e-3
+MLP_WEIGHT_DECAY: float = 1e-4
+MLP_BATCH_SIZE: int = 64
+MLP_MAX_EPOCHS: int = 100
+MLP_PATIENCE: int = 10
+MLP_MONITOR_METRIC: str = "val_pr_auc"   # "val_pr_auc" | "val_loss" | "val_recall"
+
+# ── Validação cruzada ─────────────────────────────────────────────────────────
+CV_N_SPLITS: int = 5
+
+# ── Custos de negócio (trade-off FP × FN) ─────────────────────────────────────
+COST_FN: float = 500.0   # cliente perdido sem tentativa de retenção
+COST_FP: float = 50.0    # campanha de retenção desperdiçada
