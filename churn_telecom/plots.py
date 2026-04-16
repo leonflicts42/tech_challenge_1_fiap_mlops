@@ -156,3 +156,68 @@ def save_threshold_f1_recall(
 
     logger.info("Threshold plot salvo em: %s", path)
     return path
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PATCH para churn_telecom/plots.py
+#
+# Adicione esta função ao final do arquivo. Mantém o padrão das demais:
+# Path absoluto, dpi=120, plt.close(fig), logger.info no fim.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def save_training_curves(
+    history: dict[str, list[float]],
+    path: Path,
+    monitor_metric: str = "val_pr_auc",
+    title: str = "Training Curves",
+) -> Path:
+    """Salva curvas de treino da MLP em PNG (loss + métrica monitorada).
+
+    Parâmetros
+    ----------
+    history         : dict com chaves "train_loss", "val_loss" e a métrica monitorada.
+                      Cada valor é a lista de medições por época.
+    path            : caminho de saída do PNG.
+    monitor_metric  : nome da métrica usada em early stopping (eixo direito).
+    title           : título global da figura.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    epochs = range(1, len(history["train_loss"]) + 1)
+
+    fig, ax_loss = plt.subplots(figsize=(8, 4))
+
+    # Eixo esquerdo: losses
+    ax_loss.plot(epochs, history["train_loss"], label="train_loss", color="steelblue")
+    ax_loss.plot(epochs, history["val_loss"], label="val_loss", color="coral")
+    ax_loss.set_xlabel("Época")
+    ax_loss.set_ylabel("Loss (BCE)")
+    ax_loss.grid(alpha=0.3)
+
+    # Eixo direito: métrica monitorada
+    if monitor_metric in history and len(history[monitor_metric]) > 0:
+        ax_metric = ax_loss.twinx()
+        ax_metric.plot(
+            epochs,
+            history[monitor_metric],
+            label=monitor_metric,
+            color="dimgray",
+            linestyle="--",
+        )
+        ax_metric.set_ylabel(monitor_metric)
+
+        lines_l, labels_l = ax_loss.get_legend_handles_labels()
+        lines_r, labels_r = ax_metric.get_legend_handles_labels()
+        ax_loss.legend(lines_l + lines_r, labels_l + labels_r, loc="best")
+    else:
+        ax_loss.legend(loc="best")
+
+    ax_loss.set_title(title)
+    fig.tight_layout()
+    fig.savefig(path, dpi=120)
+    plt.close(fig)
+
+    logger.info("Training curves salvas em: %s", path)
+    return path

@@ -35,3 +35,8 @@ include = ["churn_telecom*"]
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.10",
+]
