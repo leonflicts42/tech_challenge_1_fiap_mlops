@@ -1,0 +1,63 @@
+[33mcommit 8e3ceadc269fdc3ec52b38cc3f80e61935d9d6e5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeat/baseline[m[33m)[m
+Author: leonflicts42 <leonflicts.42@gmail.com>
+Date:   Tue Apr 14 07:39:29 2026 -0300
+
+    Remoção do mlflow database e API Key do controle de versão e adição no .gitignore
+
+[33mcommit a317b43e8bb0cd00cc544b61a88489bc55405b6d[m
+Author: leonflicts42 <leonflicts.42@gmail.com>
+Date:   Tue Apr 14 07:34:27 2026 -0300
+
+    Análise do baseline e refatoração do código com ruff
+
+[33mcommit c7e533910b43e597edfdf5facf79e8078d60be8c[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: Leon Flicts <53539260+leonflicts42@users.noreply.github.com>
+Date:   Mon Apr 13 19:01:18 2026 -0300
+
+    Desenvolvimento das etapas de Data Cleaning, Feature Engineering e Preprocessing (#5)
+
+[33mcommit a759e072514baad1791ed4d1be60679028d09210[m
+Author: Leon Flicts <53539260+leonflicts42@users.noreply.github.com>
+Date:   Sat Apr 11 19:30:56 2026 -0300
+
+    Análise do dataset e correção dos logs (#4)
+    
+    * Análise do dataset e correção dos logs
+    
+    * Análise univariada das features
+    
+    * Análises bivariada, multivariada e de multicolinearidade
+    
+    * Análise da etapa de EDA e inicio do Data Cleaning
+
+[33mcommit b608266cc39ec4d4023e0aa6bff246b95aa411ad[m
+Author: Leon Flicts <53539260+leonflicts42@users.noreply.github.com>
+Date:   Thu Apr 9 18:10:49 2026 -0300
+
+    Fix/ajustes finais ambiente (#3)
+    
+    * Commit inicial: estruturação do ambiente do projeto
+    
+    * chore: resolve conflito no gitignore após merge remoto
+
+[33mcommit a4e91d8d7fd18af497ced9710615848c6a414d46[m
+Author: Leon Flicts <53539260+leonflicts42@users.noreply.github.com>
+Date:   Thu Apr 9 18:03:03 2026 -0300
+
+    Feat/eda churn data source (#2)
+    
+    * Commit inicial: estruturação do ambiente do projeto
+    
+    * Criação do notebook 01 para data understanting do problema e do dataset
+
+[33mcommit 47c01b06249df4df8e0272d382a28256a80a30f5[m
+Author: Leon Flicts <53539260+leonflicts42@users.noreply.github.com>
+Date:   Thu Apr 9 17:46:13 2026 -0300
+
+    Commit inicial: estruturação do ambiente do projeto (#1)
+
+[33mcommit 5d99961967b356bb977245e5175f46d04e5adc99[m
+Author: Leon Flicts <53539260+leonflicts42@users.noreply.github.com>
+Date:   Thu Apr 9 16:25:51 2026 -0300
+
+    Initial commit

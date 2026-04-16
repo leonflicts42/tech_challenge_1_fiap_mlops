@@ -213,4 +213,6 @@ mlartifacts/
 mlruns/
 
 # banco SQLite do MLflow — vai para o repositório (leve, rastreia metadata)
-!mlflow.db
+!mlflow.dbmlflow.db
+
+mlflow.db

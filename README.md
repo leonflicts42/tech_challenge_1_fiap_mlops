@@ -151,3 +151,111 @@ Uso:
 ```bash
 make pre-commit   # formata e checa antes de commitar
 ```
+```
+projeto_final
+├─ .python-version
+├─ churn_telecom
+│  ├─ config.py
+│  ├─ plots.py
+│  └─ __init__.py
+├─ data
+│  ├─ interim
+│  │  ├─ telco_cleaned.parquet
+│  │  ├─ telco_features.parquet
+│  │  └─ telco_typed.parquet
+│  ├─ processed
+│  │  ├─ test.parquet
+│  │  └─ train.parquet
+│  └─ raw
+│     └─ raw_telco_customer_churn.xlsx
+├─ docs
+│  ├─ analise_0.00_vab_project_descrition.md
+│  ├─ analise_0.01_vab_data_source.md
+│  ├─ analise_0.02_vab_eda_univariate.md
+│  ├─ analise_0.03_vab_eda_bivariate.md
+│  ├─ analise_0.04_vab_eda_multivariate.md
+│  ├─ analise_1.01_vab_data_cleaning.md
+│  ├─ analise_1.02_vab_feature_engineering.md
+│  ├─ analise_1.03_vab_preprocessing.md
+│  ├─ analise_eda.md
+│  ├─ metricas_tecnicas_negocios.md
+│  ├─ ml_canvas.md
+│  └─ pipeline_data_to_baseline.html
+├─ estrutura.txt
+├─ LICENSE
+├─ logs
+├─ main.py
+├─ mlflow.db
+├─ models
+│  └─ preprocessor.pkl
+├─ notebooks
+│  ├─ 0.01_vab_data_source.ipynb
+│  ├─ 0.02_vab_eda_univariate.ipynb
+│  ├─ 0.03_vab_eda_bivariate.ipynb
+│  ├─ 0.04_vab_eda_multivariate.ipynb
+│  ├─ 1.01_vab_data_cleaning.ipynb
+│  ├─ 1.02_vab_feature_engineering.ipynb
+│  ├─ 1.03_vab_preprocessing.ipynb
+│  ├─ 3.01_vab_baseline_dummy.ipynb
+│  └─ 3.02_vab_baseline_logistic.ipynb
+├─ pyproject.toml
+├─ README.md
+├─ references
+├─ reports
+│  └─ figures
+│     ├─ baselines
+│     │  ├─ dummy_confusion_matrix.png
+│     │  ├─ dummy_roc_curve.png
+│     │  ├─ logistic_confusion_matrix.png
+│     │  ├─ logistic_feature_importance.png
+│     │  └─ logistic_roc_curve.png
+│     ├─ bivariate_cat_contract.png
+│     ├─ bivariate_cat_dependents.png
+│     ├─ bivariate_cat_device_protection.png
+│     ├─ bivariate_cat_gender.png
+│     ├─ bivariate_cat_internet_service.png
+│     ├─ bivariate_cat_multiple_lines.png
+│     ├─ bivariate_cat_online_backup.png
+│     ├─ bivariate_cat_online_security.png
+│     ├─ bivariate_cat_paperless_billing.png
+│     ├─ bivariate_cat_partner.png
+│     ├─ bivariate_cat_payment_method.png
+│     ├─ bivariate_cat_phone_service.png
+│     ├─ bivariate_cat_senior_citizen.png
+│     ├─ bivariate_cat_streaming_movies.png
+│     ├─ bivariate_cat_streaming_tv.png
+│     ├─ bivariate_cat_tech_support.png
+│     ├─ bivariate_num_monthly charges.png
+│     ├─ bivariate_num_tenure months.png
+│     ├─ bivariate_num_total charges.png
+│     ├─ churn_distribution.png
+│     ├─ correlation_matrix_numeric.png
+│     ├─ missing_values.png
+│     ├─ univariate_cat_contract.png
+│     ├─ univariate_cat_dependents.png
+│     ├─ univariate_cat_device_protection.png
+│     ├─ univariate_cat_gender.png
+│     ├─ univariate_cat_internet_service.png
+│     ├─ univariate_cat_multiple_lines.png
+│     ├─ univariate_cat_online_backup.png
+│     ├─ univariate_cat_online_security.png
+│     ├─ univariate_cat_paperless_billing.png
+│     ├─ univariate_cat_partner.png
+│     ├─ univariate_cat_payment_method.png
+│     ├─ univariate_cat_phone_service.png
+│     ├─ univariate_cat_senior_citizen.png
+│     ├─ univariate_cat_streaming_movies.png
+│     ├─ univariate_cat_streaming_tv.png
+│     ├─ univariate_cat_tech_support.png
+│     ├─ univariate_num_monthly_charges.png
+│     ├─ univariate_num_tenure_months.png
+│     ├─ univariate_num_total_charges.png
+│     ├─ univariate_skew_kurt_monthly_charges.png
+│     ├─ univariate_skew_kurt_tenure_months.png
+│     ├─ univariate_skew_kurt_total_charges.png
+│     └─ vif_table.csv
+├─ requirements.txt
+├─ src
+└─ uv.lock
+
+```
