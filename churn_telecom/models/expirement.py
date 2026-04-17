@@ -49,6 +49,7 @@ THRESHOLD = 0.5
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+
 def _load_data() -> tuple[np.ndarray, np.ndarray]:
     """
     Carrega features e target já pré-processados pelo pipeline da Etapa 1.
@@ -66,8 +67,12 @@ def _load_data() -> tuple[np.ndarray, np.ndarray]:
 
     X = np.load(data_path)
     y = np.load(target_path)
-    logger.info("dados carregados | X=%s | y=%s | churn_rate=%.2f%%",
-                X.shape, y.shape, y.mean() * 100)
+    logger.info(
+        "dados carregados | X=%s | y=%s | churn_rate=%.2f%%",
+        X.shape,
+        y.shape,
+        y.mean() * 100,
+    )
     return X, y
 
 
@@ -79,6 +84,7 @@ def _pos_weight(y_train: np.ndarray) -> float:
 
 
 # ── Treinamento de baselines sklearn ────────────────────────────────────────
+
 
 def _train_sklearn_baseline(
     name: str,
@@ -101,15 +107,19 @@ def _train_sklearn_baseline(
             y_proba = estimator.predict(X_val).astype(float)
 
         from sklearn.metrics import roc_auc_score, average_precision_score
-        mlflow.log_metrics({
-            "val_roc_auc": float(roc_auc_score(y_val, y_proba)),
-            "val_pr_auc": float(average_precision_score(y_val, y_proba)),
-        })
+
+        mlflow.log_metrics(
+            {
+                "val_roc_auc": float(roc_auc_score(y_val, y_proba)),
+                "val_pr_auc": float(average_precision_score(y_val, y_proba)),
+            }
+        )
         logger.info("%s | treinamento concluído", name)
         return y_proba
 
 
 # ── Treinamento MLP ──────────────────────────────────────────────────────────
+
 
 def _train_mlp(
     X_train: np.ndarray,
@@ -136,14 +146,19 @@ def _train_mlp(
     }
 
     with mlflow.start_run(run_name="ChurnMLP", nested=True):
-        mlflow.log_params({**mlp_cfg, **{
-            "lr": trainer_cfg.lr,
-            "epochs": trainer_cfg.epochs,
-            "batch_size": trainer_cfg.batch_size,
-            "patience": trainer_cfg.patience,
-            "weight_decay": trainer_cfg.weight_decay,
-            "pos_weight": trainer_cfg.pos_weight,
-        }})
+        mlflow.log_params(
+            {
+                **mlp_cfg,
+                **{
+                    "lr": trainer_cfg.lr,
+                    "epochs": trainer_cfg.epochs,
+                    "batch_size": trainer_cfg.batch_size,
+                    "patience": trainer_cfg.patience,
+                    "weight_decay": trainer_cfg.weight_decay,
+                    "pos_weight": trainer_cfg.pos_weight,
+                },
+            }
+        )
 
         model = build_mlp(
             input_dim=input_dim,
@@ -154,18 +169,24 @@ def _train_mlp(
         trainer = ChurnTrainer(model, trainer_cfg)
         history = trainer.fit(X_train, y_train, X_val, y_val)
 
-        mlflow.log_metrics({
-            "best_epoch": history.best_epoch,
-            "stopped_early": int(history.stopped_early),
-        })
+        mlflow.log_metrics(
+            {
+                "best_epoch": history.best_epoch,
+                "stopped_early": int(history.stopped_early),
+            }
+        )
 
         y_proba = trainer.predict_proba(X_val)
-        logger.info("MLP | stopped_early=%s | best_epoch=%d",
-                    history.stopped_early, history.best_epoch)
+        logger.info(
+            "MLP | stopped_early=%s | best_epoch=%d",
+            history.stopped_early,
+            history.best_epoch,
+        )
         return y_proba, trainer
 
 
 # ── CV estratificado para avaliação robusta ───────────────────────────────────
+
 
 def _cv_evaluate(
     name: str,
@@ -201,6 +222,7 @@ def _cv_evaluate(
 
 # ── Runner principal ──────────────────────────────────────────────────────────
 
+
 def run_experiment() -> None:
     mlflow.set_experiment(MLFLOW_EXPERIMENT)
     X, y = _load_data()
@@ -208,6 +230,7 @@ def run_experiment() -> None:
 
     # Split treino/val estratificado (80/20) para o run final
     from sklearn.model_selection import train_test_split
+
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=0.2, stratify=y, random_state=SEED
     )
@@ -218,38 +241,53 @@ def run_experiment() -> None:
     comparator = ModelComparator()
 
     with mlflow.start_run(run_name="etapa2_comparacao"):
-        mlflow.log_params({
-            "seed": SEED,
-            "n_splits_cv": N_SPLITS,
-            "threshold": THRESHOLD,
-            "cost_fp": cost_cfg.fp_cost,
-            "cost_fn": cost_cfg.fn_cost,
-            "clv": cost_cfg.clv_per_customer,
-        })
+        mlflow.log_params(
+            {
+                "seed": SEED,
+                "n_splits_cv": N_SPLITS,
+                "threshold": THRESHOLD,
+                "cost_fp": cost_cfg.fp_cost,
+                "cost_fn": cost_cfg.fn_cost,
+                "clv": cost_cfg.clv_per_customer,
+            }
+        )
 
         # ── Dummy ────────────────────────────────────────────────────────────
         dummy_proba = _train_sklearn_baseline(
             name="DummyClassifier",
             estimator=DummyClassifier(strategy="stratified", random_state=SEED),
-            X_train=X_train, y_train=y_train,
-            X_val=X_val, y_val=y_val,
+            X_train=X_train,
+            y_train=y_train,
+            X_val=X_val,
+            y_val=y_val,
             params={"strategy": "stratified"},
         )
         m_dummy = calc.compute("DummyClassifier", y_val, dummy_proba)
         comparator.add(cost_analyzer.annotate(m_dummy))
 
         # ── Logistic Regression ───────────────────────────────────────────────
-        lr_pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("clf", LogisticRegression(
-                C=1.0, max_iter=1000, class_weight="balanced",
-                random_state=SEED, solver="lbfgs")),
-        ])
+        lr_pipe = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                (
+                    "clf",
+                    LogisticRegression(
+                        C=1.0,
+                        max_iter=1000,
+                        class_weight="balanced",
+                        random_state=SEED,
+                        solver="lbfgs",
+                    ),
+                ),
+            ]
+        )
         lr_proba = _train_sklearn_baseline(
             name="LogisticRegression",
             estimator=lr_pipe,
-            X_train=X_train, y_train=y_train,
-            X_val=X_val, y_val=y_val,
+            X_train=X_train,
+            y_train=y_train,
+            X_val=X_val,
+            y_val=y_val,
             params={"C": 1.0, "class_weight": "balanced"},
         )
         m_lr = calc.compute("LogisticRegression", y_val, lr_proba)
@@ -259,11 +297,16 @@ def run_experiment() -> None:
         rf_proba = _train_sklearn_baseline(
             name="RandomForest",
             estimator=RandomForestClassifier(
-                n_estimators=200, max_depth=8,
-                class_weight="balanced", random_state=SEED, n_jobs=-1
+                n_estimators=200,
+                max_depth=8,
+                class_weight="balanced",
+                random_state=SEED,
+                n_jobs=-1,
             ),
-            X_train=X_train, y_train=y_train,
-            X_val=X_val, y_val=y_val,
+            X_train=X_train,
+            y_train=y_train,
+            X_val=X_val,
+            y_val=y_val,
             params={"n_estimators": 200, "max_depth": 8},
         )
         m_rf = calc.compute("RandomForest", y_val, rf_proba)
@@ -273,11 +316,16 @@ def run_experiment() -> None:
         gb_proba = _train_sklearn_baseline(
             name="GradientBoosting",
             estimator=GradientBoostingClassifier(
-                n_estimators=200, max_depth=4, learning_rate=0.05,
-                subsample=0.8, random_state=SEED
+                n_estimators=200,
+                max_depth=4,
+                learning_rate=0.05,
+                subsample=0.8,
+                random_state=SEED,
             ),
-            X_train=X_train, y_train=y_train,
-            X_val=X_val, y_val=y_val,
+            X_train=X_train,
+            y_train=y_train,
+            X_val=X_val,
+            y_val=y_val,
             params={"n_estimators": 200, "max_depth": 4, "lr": 0.05},
         )
         m_gb = calc.compute("GradientBoosting", y_val, gb_proba)
@@ -290,9 +338,7 @@ def run_experiment() -> None:
 
         # ── Tabela comparativa ────────────────────────────────────────────────
         summary_df = comparator.summary()
-        tradeoff_df = cost_analyzer.tradeoff_summary(
-            [m_dummy, m_lr, m_rf, m_gb, m_mlp]
-        )
+        tradeoff_df = cost_analyzer.tradeoff_summary([m_dummy, m_lr, m_rf, m_gb, m_mlp])
 
         # Salvar como artefatos CSV
         Path("models").mkdir(exist_ok=True)
@@ -306,17 +352,18 @@ def run_experiment() -> None:
 
         # Log métricas finais do melhor modelo no run pai
         best = summary_df.iloc[0]
-        mlflow.log_metrics({
-            "best_roc_auc": float(best["ROC-AUC"]),
-            "best_pr_auc": float(best["PR-AUC"]),
-            "best_f1": float(best["F1"]),
-        })
+        mlflow.log_metrics(
+            {
+                "best_roc_auc": float(best["ROC-AUC"]),
+                "best_pr_auc": float(best["PR-AUC"]),
+                "best_f1": float(best["F1"]),
+            }
+        )
         mlflow.log_param("best_model", best["model"])
 
         logger.info("\n%s", summary_df.to_string(index=False))
         logger.info("\nTrade-off de custo:\n%s", tradeoff_df.to_string(index=False))
-        logger.info("Melhor modelo: %s (ROC-AUC=%.4f)",
-                    best["model"], best["ROC-AUC"])
+        logger.info("Melhor modelo: %s (ROC-AUC=%.4f)", best["model"], best["ROC-AUC"])
 
 
 if __name__ == "__main__":

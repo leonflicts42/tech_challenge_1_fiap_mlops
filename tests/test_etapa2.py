@@ -32,6 +32,7 @@ DEVICE = "cpu"
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def synthetic_data():
     """Dataset binário balanceado sintético."""
@@ -68,26 +69,25 @@ def trainer_config():
 
 # ── EarlyStopping ─────────────────────────────────────────────────────────────
 
+
 class TestEarlyStopping:
     def test_does_not_stop_on_improvement(self, small_model):
         es = EarlyStopping(patience=3, min_delta=1e-4)
         for loss in [1.0, 0.9, 0.8, 0.7]:
-            assert not es.step(loss, small_model), (
-                "não deve parar com melhora contínua"
-            )
+            assert not es.step(loss, small_model), "não deve parar com melhora contínua"
 
     def test_stops_after_patience(self, small_model):
         es = EarlyStopping(patience=3, min_delta=1e-4)
-        es.step(1.0, small_model)       # melhora inicial — registra best_state
+        es.step(1.0, small_model)  # melhora inicial — registra best_state
         stopped = False
         for _ in range(3):
-            stopped = es.step(1.0, small_model)   # platô — incrementa counter
+            stopped = es.step(1.0, small_model)  # platô — incrementa counter
         assert stopped, "deve parar após patience=3 sem melhora"
 
     def test_restores_best_weights(self, small_model):
         """Após corromper pesos, restore_best deve desfazer a corrupção."""
         es = EarlyStopping(patience=2, min_delta=1e-4)
-        es.step(1.0, small_model)       # salva estado atual como melhor
+        es.step(1.0, small_model)  # salva estado atual como melhor
 
         # Captura soma dos pesos antes da corrupção
         before = sum(p.abs().sum().item() for p in small_model.parameters())
@@ -110,12 +110,13 @@ class TestEarlyStopping:
     def test_counter_resets_on_improvement(self, small_model):
         es = EarlyStopping(patience=3, min_delta=1e-4)
         es.step(1.0, small_model)
-        es.step(1.0, small_model)       # counter=1
-        es.step(0.5, small_model)       # melhora → reset
+        es.step(1.0, small_model)  # counter=1
+        es.step(0.5, small_model)  # melhora → reset
         assert es._counter == 0, "counter deve zerar após melhora"
 
 
 # ── ChurnTrainer ──────────────────────────────────────────────────────────────
+
 
 class TestChurnTrainer:
     def test_smoke_fit(self, small_model, split_data, trainer_config):
@@ -125,16 +126,20 @@ class TestChurnTrainer:
         history = trainer.fit(X_tr, y_tr, X_vl, y_vl)
         assert history is not None
 
-    def test_history_lengths_match_epochs(self, small_model, split_data, trainer_config):
+    def test_history_lengths_match_epochs(
+        self, small_model, split_data, trainer_config
+    ):
         X_tr, y_tr, X_vl, y_vl = split_data
         trainer = ChurnTrainer(small_model, trainer_config)
         history = trainer.fit(X_tr, y_tr, X_vl, y_vl)
         n = len(history.train_loss)
-        assert n == len(history.val_loss) == len(history.train_auc) == len(history.val_auc), (
-            "todas as listas do histórico devem ter o mesmo comprimento"
-        )
+        assert (
+            n == len(history.val_loss) == len(history.train_auc) == len(history.val_auc)
+        ), "todas as listas do histórico devem ter o mesmo comprimento"
 
-    def test_history_epochs_leq_max_epochs(self, small_model, split_data, trainer_config):
+    def test_history_epochs_leq_max_epochs(
+        self, small_model, split_data, trainer_config
+    ):
         X_tr, y_tr, X_vl, y_vl = split_data
         trainer = ChurnTrainer(small_model, trainer_config)
         history = trainer.fit(X_tr, y_tr, X_vl, y_vl)
@@ -164,9 +169,7 @@ class TestChurnTrainer:
         """Com patience=1, o treino deve parar antes de 20 épocas."""
         # FIX: 4º arg é device — "cpu", não SEED
         model = build_mlp(INPUT_DIM, [8], 0.0, DEVICE)
-        cfg = TrainerConfig(
-            epochs=20, patience=1, lr=1e-3, device=DEVICE, seed=SEED
-        )
+        cfg = TrainerConfig(epochs=20, patience=1, lr=1e-3, device=DEVICE, seed=SEED)
         rng = np.random.default_rng(SEED)
         X = rng.standard_normal((200, INPUT_DIM)).astype(np.float32)
         y = rng.integers(0, 2, size=200).astype(np.float32)
@@ -178,6 +181,7 @@ class TestChurnTrainer:
 
 
 # ── MetricsCalculator ─────────────────────────────────────────────────────────
+
 
 class TestMetricsCalculator:
     def test_perfect_classifier(self):
@@ -209,6 +213,7 @@ class TestMetricsCalculator:
 
 # ── CostAnalyzer ─────────────────────────────────────────────────────────────
 
+
 class TestCostAnalyzer:
     def test_cost_formula(self):
         """cost_total deve ser FP * fp_cost + FN * fn_cost."""
@@ -221,7 +226,7 @@ class TestCostAnalyzer:
         analyzer = CostAnalyzer(cfg)
         calc = MetricsCalculator()
         y_true = np.array([0, 0, 1, 1])
-        y_proba = np.array([0.9, 0.1, 0.1, 0.9])   # 1 FP, 1 FN
+        y_proba = np.array([0.9, 0.1, 0.1, 0.9])  # 1 FP, 1 FN
         m = analyzer.annotate(calc.compute("test", y_true, y_proba))
         assert m.cost_total == pytest.approx(m.fp * 100.0 + m.fn * 1000.0)
 
@@ -239,13 +244,23 @@ class TestCostAnalyzer:
 
 # ── ModelComparator ───────────────────────────────────────────────────────────
 
+
 class TestModelComparator:
     def _make_metrics(self, name: str, auc: float):
         from churn_telecom.models.evaluation import ModelMetrics
+
         return ModelMetrics(
-            name=name, roc_auc=auc, pr_auc=auc, f1=auc,
-            precision=auc, recall=auc, specificity=auc,
-            tn=10, fp=5, fn=3, tp=8,
+            name=name,
+            roc_auc=auc,
+            pr_auc=auc,
+            f1=auc,
+            precision=auc,
+            recall=auc,
+            specificity=auc,
+            tn=10,
+            fp=5,
+            fn=3,
+            tp=8,
         )
 
     def test_summary_ordered_by_auc(self):

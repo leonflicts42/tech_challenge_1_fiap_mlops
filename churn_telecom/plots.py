@@ -166,7 +166,6 @@ NÃO substitua o arquivo inteiro; apenas cole este bloco ao final.
 """
 
 
-
 def save_training_curves(
     train_losses: list[float],
     val_losses: list[float],
@@ -204,8 +203,11 @@ def save_training_curves(
     ax_loss.plot(epochs, val_losses, label="val loss", linewidth=1.8, linestyle="--")
     if best_epoch is not None:
         ax_loss.axvline(
-            best_epoch, color="red", linestyle=":", linewidth=1.2,
-            label=f"best epoch ({best_epoch})"
+            best_epoch,
+            color="red",
+            linestyle=":",
+            linewidth=1.2,
+            label=f"best epoch ({best_epoch})",
         )
     ax_loss.set_xlabel("Época")
     ax_loss.set_ylabel("BCE Loss")
@@ -220,8 +222,11 @@ def save_training_curves(
         ax_auc.plot(epochs, val_aucs, label="val AUC", linewidth=1.8, linestyle="--")
         if best_epoch is not None:
             ax_auc.axvline(
-                best_epoch, color="red", linestyle=":", linewidth=1.2,
-                label=f"best epoch ({best_epoch})"
+                best_epoch,
+                color="red",
+                linestyle=":",
+                linewidth=1.2,
+                label=f"best epoch ({best_epoch})",
             )
         ax_auc.set_xlabel("Época")
         ax_auc.set_ylabel("ROC-AUC")

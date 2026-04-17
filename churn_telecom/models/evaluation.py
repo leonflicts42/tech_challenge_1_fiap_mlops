@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 # ── Estrutura de resultado ───────────────────────────────────────────────────
 
+
 @dataclass
 class ModelMetrics:
     """Conjunto padronizado de métricas para comparação."""
@@ -32,7 +33,7 @@ class ModelMetrics:
     f1: float
     precision: float
     recall: float
-    specificity: float   # recall da classe negativa = TN / (TN + FP)
+    specificity: float  # recall da classe negativa = TN / (TN + FP)
     tn: int
     fp: int
     fn: int
@@ -61,6 +62,7 @@ class ModelMetrics:
 
 
 # ── Calculadora de métricas ───────────────────────────────────────────────────
+
 
 class MetricsCalculator:
     """
@@ -108,6 +110,7 @@ class MetricsCalculator:
 
 # ── Análise de custo de negócio ──────────────────────────────────────────────
 
+
 @dataclass
 class CostConfig:
     """
@@ -126,10 +129,10 @@ class CostConfig:
                        ≈ clv_per_customer (receita perdida)
     """
 
-    clv_per_customer: float = 1_200.0   # R$ — receita anual estimada
-    retention_cost: float = 80.0        # R$ — custo de ação (ligação, desconto)
-    fp_cost: float = 80.0               # = retention_cost (custo de abordar em vão)
-    fn_cost: float = 1_200.0            # = clv perdido
+    clv_per_customer: float = 1_200.0  # R$ — receita anual estimada
+    retention_cost: float = 80.0  # R$ — custo de ação (ligação, desconto)
+    fp_cost: float = 80.0  # = retention_cost (custo de abordar em vão)
+    fn_cost: float = 1_200.0  # = clv perdido
 
 
 class CostAnalyzer:
@@ -190,6 +193,7 @@ class CostAnalyzer:
 
 
 # ── Tabela comparativa ────────────────────────────────────────────────────────
+
 
 class ModelComparator:
     """

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 # ── Configuração ─────────────────────────────────────────────────────────────
 
+
 @dataclass
 class TrainerConfig:
     """Hiperparâmetros e controles de treinamento."""
@@ -48,6 +49,7 @@ class TrainHistory:
 
 # ── Utilidades ────────────────────────────────────────────────────────────────
 
+
 def _set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -72,6 +74,7 @@ def _compute_auc(logits: torch.Tensor, targets: torch.Tensor) -> float:
 
 # ── Early Stopping ────────────────────────────────────────────────────────────
 
+
 class EarlyStopping:
     """Para o treinamento quando val_loss não melhora por `patience` épocas."""
 
@@ -87,9 +90,7 @@ class EarlyStopping:
         if val_loss < self._best - self.min_delta:
             self._best = val_loss
             self._counter = 0
-            self._best_state = {
-                k: v.clone() for k, v in model.state_dict().items()
-            }
+            self._best_state = {k: v.clone() for k, v in model.state_dict().items()}
             logger.debug("early_stopping | melhora | val_loss=%.6f", val_loss)
         else:
             self._counter += 1
@@ -108,6 +109,7 @@ class EarlyStopping:
 
 
 # ── Trainer principal ─────────────────────────────────────────────────────────
+
 
 class ChurnTrainer:
     """Loop de treinamento da ChurnMLP com early stopping e MLflow tracking."""
