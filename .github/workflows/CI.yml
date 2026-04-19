@@ -9,7 +9,7 @@ jobs:
 
       - name: Install uv manually
         run: |
-          curl -LsSf https://astral.sh | sh
+          curl -LsSf https://astral.sh/uv/install.sh | bash
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Set up Python
