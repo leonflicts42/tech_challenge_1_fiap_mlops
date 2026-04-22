@@ -1,4 +1,0 @@
-Run,ROC-AUC,PR-AUC,Recall,F1,FN,FP,Custo FN,Custo FP,Custo Total,Net Value,Best Epoch,Stopped Early,Threshold Ótimo,SLO OK
-MLP_baseline,0.9549,0.9507,90.6%,0.902,65,71,"US$188,695","US$3,550","US$192,245","US$1,790,987",100,False,0.1,✓
-MLP_recall_otimizado,0.9582,0.9527,93.1%,0.910,48,80,"US$139,344","US$4,000","US$143,344","US$1,839,038",36,True,0.13,✓
-MLP_posweight_alto,0.9547,0.9504,97.0%,0.893,21,140,"US$60,963","US$7,000","US$67,963","US$1,913,069",46,True,0.16999999999999998,✓

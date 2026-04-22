@@ -1,0 +1,45 @@
+{
+  "model": "MLP",
+  "timestamp": "2026-04-21T16:31:17.934411",
+  "best_params": {
+    "n_layers": 2,
+    "dim_0": 128,
+    "dim_1": 64,
+    "dropout": 0.15,
+    "lr": 0.001619,
+    "batch_size": 128,
+    "weight_decay": 0.000185,
+    "pos_weight": 5.765619,
+    "use_skip": false,
+    "patience": 15
+  },
+  "test_metrics": {
+    "roc_auc": 0.849974,
+    "pr_auc": 0.666326,
+    "recall": 0.989247,
+    "precision": 0.365079,
+    "f1": 0.533333,
+    "tp": 368,
+    "tn": 393,
+    "fp": 640,
+    "fn": 4,
+    "business_value": 1017420.56,
+    "threshold": 0.16,
+    "slo_ok": true
+  },
+  "cost_function": {
+    "TP": 2845.0,
+    "TN": 73.52,
+    "FN": -2845.0,
+    "FP": -73.52
+  },
+  "dataset": {
+    "train_md5": "7575994d37201ad71c968369257942a0",
+    "test_md5": "7fe86301ae707780c7de1d3faaaa69fa",
+    "n_train": 5616,
+    "n_test": 1405,
+    "n_features": 30,
+    "churn_rate_train": 0.26442307233810425,
+    "churn_rate_test": 0.26476868987083435
+  }
+}

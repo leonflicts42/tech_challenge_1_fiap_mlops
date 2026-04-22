@@ -32,10 +32,23 @@ DATA_RAW = PROJECT_ROOT / "data" / "raw"
 DATA_INTERIM = PROJECT_ROOT / "data" / "interim"
 DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
 REPORTS_FIGURES = PROJECT_ROOT / "reports" / "figures"
+REPORTS_FIGURES_UNIVARIADA = PROJECT_ROOT / "reports" / "figures" / "univariada"
+REPORTS_FIGURES_MULTIVARIADA = PROJECT_ROOT / "reports" / "figures" / "multivariada"
+REPORTS_FIGURES_MLP = PROJECT_ROOT / "reports" / "figures" / "mlp"
+REPORT_FIGURES_CORRELACAO = REPORTS_FIGURES_MLP / "correlacao"
 MODELS_DIR = PROJECT_ROOT / "models"
 
 # Garante que os diretórios existam na inicialização
-for _dir in (DATA_RAW, DATA_INTERIM, DATA_PROCESSED, REPORTS_FIGURES, MODELS_DIR):
+for _dir in (
+    DATA_RAW,
+    DATA_INTERIM,
+    DATA_PROCESSED,
+    REPORTS_FIGURES,
+    REPORTS_FIGURES_UNIVARIADA,
+    REPORTS_FIGURES_MLP,
+    REPORT_FIGURES_CORRELACAO,
+    MODELS_DIR,
+):
     _dir.mkdir(parents=True, exist_ok=True)
 
 # ── Paleta de cores ────────────────────────────────────────────────────────────
@@ -92,8 +105,9 @@ COLS_POS = [
 ]
 
 TARGET = "Churn Value"
-TARGET_COL = "churn_value"
 LABEL_COL = "Churn Label"
+
+TARGET_COL = "churn_value"
 
 # ── MLflow ────────────────────────────────────────────────────────────────────
 MLFLOW_TRACKING_URI = f"sqlite:///{PROJECT_ROOT / 'mlflow.db'}"
@@ -260,7 +274,7 @@ CV_N_SPLITS: int = 5
 CV_RANDOM_STATE: int = 42
 
 # ── Custo de Negócio (Etapa 2) ────────────────────────────────────────────────
-COST_CLV: float = 1_200.0  # R$ — receita anual média por cliente
-COST_RETENTION: float = 80.0  # R$ — custo de ação de retenção
-COST_FP: float = 80.0  # R$ — custo de abordar cliente que não ia sair
-COST_FN: float = 1_200.0  # R$ — custo de perder cliente que ia sair
+COST_CLV: float = 2845  # R$ — receita anual média por cliente
+COST_RETENTION: float = 73.52  # R$ — custo de ação de retenção
+COST_FP: float = 73.52  # R$ — custo de abordar cliente que não ia sair
+COST_FN: float = 2845.00  # R$ — custo de perder cliente que ia sair
