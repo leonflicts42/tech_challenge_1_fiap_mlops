@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar o uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Configurar Python com uv
+        run: uv python install 3.12
+
+      - name: Instalar dependências
+        # O uv sync garante que o ambiente esteja exatamente como o lockfile
+        run: uv sync --all-extras --dev
+
+      - name: Lint com Ruff
+        # Verifica erros de lógica e más práticas
+        run: uv run ruff check .
+
+      - name: Verificar Formatação com Ruff
+        # Garante que o código segue o padrão de estilo
+        run: uv run ruff format --check .
+
+      - name: Rodar Testes com Pytest
+        # Executa seus testes de integração (rota /health)
+        run: uv run pytest

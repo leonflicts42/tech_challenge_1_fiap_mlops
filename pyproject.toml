@@ -3,7 +3,24 @@ name = "churn-prediction"
 version = "0.1.0"
 description = "Churn prediction for telecom"
 readme = "README.md"
-requires-python = ">=3.10"
+license = {file = "LICENSE"}
+requires-python = ">=3.12"
+
+authors = [
+    {name = "Victor Araújo Barros", email = "victor.seabra.ba@gmail.com"}
+]
+
+keywords = ["churn", "prediction", "telecom", "machine-learning", "api", "fastapi"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
 dependencies = [
     "mlflow>=3.0.0,<4.0.0",
     "pydantic>=2.8.0,<3.0.0",
@@ -22,11 +39,17 @@ dependencies = [
     "statsmodels>=0.14.6",
     "pylance>=4.0.0",
     "imbalanced-learn>=0.14.1",
-    "ruff>=0.15.10",
     "nbstripout>=0.9.1",
     "torch>=2.11.0",
     "setuptools>=81.0.0",
+    "fastapi>=0.135.3",
+    "uvicorn>=0.44.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/leonflicts42/tech_challenge_1_fiap_mlops"
+Repository = "https://github.com/leonflicts42/tech_challenge_1_fiap_mlops#readme"
+Issues = "https://github.com/leonflicts42/tech_challenge_1_fiap_mlops/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -35,3 +58,32 @@ include = ["churn_telecom*"]
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.10",
+    "taskipy>=1.14.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.taskipy.tasks]
+# Rodar o linter para verificar erros
+lint = "ruff check ."
+# Rodar o linter para verificar erros e corrigir
+lint-fix = "ruff check --fix ."
+# Formatar o código automaticamente
+format = "ruff format ."
+# Formatar o código automaticamente e corrigir
+format-check = "ruff format . --check"
+# Rodar os testes
+test = "pytest -v"
+# Rodar testes com relatório de cobertura
+post_test = "pytest --cov=src -v"
+# Rodar a aplicação principal
+run = "python app.py"
+precommit = "task lint && task format && task test"

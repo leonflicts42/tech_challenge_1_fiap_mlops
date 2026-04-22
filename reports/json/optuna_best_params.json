@@ -1,0 +1,49 @@
+{
+  "MLP": {
+    "best_params": {
+      "n_layers": 2,
+      "dim_0": 128,
+      "dim_1": 64,
+      "dropout": 0.15,
+      "lr": 0.001619,
+      "batch_size": 128,
+      "weight_decay": 0.000185,
+      "pos_weight": 5.765619,
+      "use_skip": false,
+      "patience": 15
+    },
+    "cv_best_value": 813613.85,
+    "n_trials": 50
+  },
+  "RandomForest": {
+    "best_params": {
+      "n_estimators": 150,
+      "max_depth": 5,
+      "min_samples_split": 6,
+      "min_samples_leaf": 9,
+      "max_features": null
+    },
+    "cv_best_value": 807348.17,
+    "n_trials": 50
+  },
+  "GradientBoosting": {
+    "best_params": {
+      "n_estimators": 100,
+      "max_depth": 5,
+      "learning_rate": 0.017975,
+      "subsample": 0.6,
+      "min_samples_split": 18,
+      "min_samples_leaf": 1
+    },
+    "cv_best_value": 810731.86,
+    "n_trials": 50
+  },
+  "LogisticRegression": {
+    "best_params": {
+      "C": 0.008809,
+      "penalty": "l1"
+    },
+    "cv_best_value": 809281.96,
+    "n_trials": 50
+  }
+}

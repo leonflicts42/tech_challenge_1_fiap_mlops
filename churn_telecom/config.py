@@ -32,10 +32,23 @@ DATA_RAW = PROJECT_ROOT / "data" / "raw"
 DATA_INTERIM = PROJECT_ROOT / "data" / "interim"
 DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
 REPORTS_FIGURES = PROJECT_ROOT / "reports" / "figures"
+REPORTS_FIGURES_UNIVARIADA = PROJECT_ROOT / "reports" / "figures" / "univariada"
+REPORTS_FIGURES_MULTIVARIADA = PROJECT_ROOT / "reports" / "figures" / "multivariada"
+REPORTS_FIGURES_MLP = PROJECT_ROOT / "reports" / "figures" / "mlp"
+REPORT_FIGURES_CORRELACAO = REPORTS_FIGURES_MLP / "correlacao"
 MODELS_DIR = PROJECT_ROOT / "models"
 
 # Garante que os diretórios existam na inicialização
-for _dir in (DATA_RAW, DATA_INTERIM, DATA_PROCESSED, REPORTS_FIGURES, MODELS_DIR):
+for _dir in (
+    DATA_RAW,
+    DATA_INTERIM,
+    DATA_PROCESSED,
+    REPORTS_FIGURES,
+    REPORTS_FIGURES_UNIVARIADA,
+    REPORTS_FIGURES_MLP,
+    REPORT_FIGURES_CORRELACAO,
+    MODELS_DIR,
+):
     _dir.mkdir(parents=True, exist_ok=True)
 
 # ── Paleta de cores ────────────────────────────────────────────────────────────
@@ -92,8 +105,9 @@ COLS_POS = [
 ]
 
 TARGET = "Churn Value"
-TARGET_COL = "churn_value"
 LABEL_COL = "Churn Label"
+
+TARGET_COL = "churn_value"
 
 # ── MLflow ────────────────────────────────────────────────────────────────────
 MLFLOW_TRACKING_URI = f"sqlite:///{PROJECT_ROOT / 'mlflow.db'}"
@@ -210,6 +224,7 @@ def log_dataset_to_mlflow(
         md5,
     )
 
+
 # ── PyTorch / MLP ──────────────────────────────────────────────────────────────
 DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -220,11 +235,46 @@ MLP_WEIGHT_DECAY: float = 1e-4
 MLP_BATCH_SIZE: int = 64
 MLP_MAX_EPOCHS: int = 100
 MLP_PATIENCE: int = 10
-MLP_MONITOR_METRIC: str = "val_pr_auc"   # "val_pr_auc" | "val_loss" | "val_recall"
+MLP_MONITOR_METRIC: str = "val_pr_auc"  # "val_pr_auc" | "val_loss" | "val_recall"
 
 # ── Validação cruzada ─────────────────────────────────────────────────────────
 CV_N_SPLITS: int = 5
 
 # ── Custos de negócio (trade-off FP × FN) ─────────────────────────────────────
-COST_FN: float = 500.0   # cliente perdido sem tentativa de retenção
-COST_FP: float = 50.0    # campanha de retenção desperdiçada
+COST_FN: float = 500.0  # cliente perdido sem tentativa de retenção
+COST_FP: float = 50.0  # campanha de retenção desperdiçada
+
+"""
+config_patch.py — colar ao FINAL da classe/dataclass existente em churn_telecom/config.py
+
+Adiciona os blocos de configuração para MLP e Validação Cruzada.
+NÃO substitua o config.py inteiro; cole apenas estas linhas.
+"""
+
+# ── MLP ──────────────────────────────────────────────────────────────────────
+# Arquitetura
+MLP_HIDDEN_DIMS: list[int] = [128, 64, 32]
+MLP_DROPOUT: float = 0.3
+
+# Otimização
+MLP_LR: float = 1e-3
+MLP_WEIGHT_DECAY: float = 1e-4
+MLP_EPOCHS: int = 100
+MLP_BATCH_SIZE: int = 256
+
+# Early stopping
+MLP_PATIENCE: int = 10
+MLP_MIN_DELTA: float = 1e-4
+
+# Device
+MLP_DEVICE: str = "cpu"  # trocar para "cuda" se GPU disponível
+
+# ── Validação Cruzada ─────────────────────────────────────────────────────────
+CV_N_SPLITS: int = 5
+CV_RANDOM_STATE: int = 42
+
+# ── Custo de Negócio (Etapa 2) ────────────────────────────────────────────────
+COST_CLV: float = 2845  # R$ — receita anual média por cliente
+COST_RETENTION: float = 73.52  # R$ — custo de ação de retenção
+COST_FP: float = 73.52  # R$ — custo de abordar cliente que não ia sair
+COST_FN: float = 2845.00  # R$ — custo de perder cliente que ia sair

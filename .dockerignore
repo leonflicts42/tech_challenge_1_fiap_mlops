@@ -1,0 +1,24 @@
+# Virtual environment (CRITICAL for uv)
+.venv/
+
+# uv state & metadata
+.uv/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Version control & IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Environment secrets
+.env
