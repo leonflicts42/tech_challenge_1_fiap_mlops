@@ -57,26 +57,34 @@ class TestPredictEndpoint:
     def test_churn_label_valido(
         self, test_client: TestClient, valid_payload: dict
     ) -> None:
-        label = test_client.post("/api/v1/predict", json=valid_payload).json()["churn_label"]
+        label = test_client.post("/api/v1/predict", json=valid_payload).json()[
+            "churn_label"
+        ]
         assert label in ("churn", "no_churn")
 
     def test_gender_invalido_retorna_422(
         self, test_client: TestClient, valid_payload: dict
     ) -> None:
         valid_payload["gender"] = "Other"
-        assert test_client.post("/api/v1/predict", json=valid_payload).status_code == 422
+        assert (
+            test_client.post("/api/v1/predict", json=valid_payload).status_code == 422
+        )
 
     def test_campo_faltando_retorna_422(
         self, test_client: TestClient, valid_payload: dict
     ) -> None:
         del valid_payload["tenure_months"]
-        assert test_client.post("/api/v1/predict", json=valid_payload).status_code == 422
+        assert (
+            test_client.post("/api/v1/predict", json=valid_payload).status_code == 422
+        )
 
     def test_tenure_acima_de_72_retorna_422(
         self, test_client: TestClient, valid_payload: dict
     ) -> None:
         valid_payload["tenure_months"] = 99
-        assert test_client.post("/api/v1/predict", json=valid_payload).status_code == 422
+        assert (
+            test_client.post("/api/v1/predict", json=valid_payload).status_code == 422
+        )
 
     def test_resposta_tem_header_request_id(
         self, test_client: TestClient, valid_payload: dict
@@ -123,7 +131,9 @@ class TestPayloadVariants:
         self, test_client: TestClient, raw_payload_33: dict
     ) -> None:
         assert len(raw_payload_33) == 33
-        self._assert_predict_ok(test_client.post("/api/v1/predict", json=raw_payload_33))
+        self._assert_predict_ok(
+            test_client.post("/api/v1/predict", json=raw_payload_33)
+        )
 
     def test_33_features_descarta_colunas_extras(
         self, test_client: TestClient, raw_payload_33: dict

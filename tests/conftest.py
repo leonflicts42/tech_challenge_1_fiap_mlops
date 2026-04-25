@@ -8,7 +8,6 @@ from unittest.mock import MagicMock
 collect_ignore_glob = ["*copy*"]
 
 
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 from api.schemas import ChurnResponse  # noqa: E402

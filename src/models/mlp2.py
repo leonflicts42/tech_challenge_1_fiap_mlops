@@ -187,7 +187,12 @@ class ChurnMLPInference(nn.Module):
         layers: list[nn.Module] = []
         in_dim = input_dim
         for h_dim in hidden_dims:
-            layers += [nn.Linear(in_dim, h_dim), nn.LayerNorm(h_dim), nn.ReLU(), nn.Dropout(dropout)]
+            layers += [
+                nn.Linear(in_dim, h_dim),
+                nn.LayerNorm(h_dim),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+            ]
             in_dim = h_dim
 
         self.hidden = nn.Sequential(*layers)

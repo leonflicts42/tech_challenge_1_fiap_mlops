@@ -51,7 +51,8 @@ def test_fit_retorna_self(eng: FeatureEngineer, df: pd.DataFrame) -> None:
 
 
 def test_fit_com_y_retorna_self(eng: FeatureEngineer, df: pd.DataFrame) -> None:
-    import pandas as _pd 
+    import pandas as _pd
+
     y = _pd.Series([0])
     assert eng.fit(df, y) is eng
 
@@ -61,7 +62,9 @@ def test_transform_adiciona_6_colunas(eng: FeatureEngineer, df: pd.DataFrame) ->
     assert out.shape[1] == df.shape[1] + 6
 
 
-def test_transform_nao_modifica_original(eng: FeatureEngineer, df: pd.DataFrame) -> None:
+def test_transform_nao_modifica_original(
+    eng: FeatureEngineer, df: pd.DataFrame
+) -> None:
     cols_antes = list(df.columns)
     eng.transform(df)
     assert list(df.columns) == cols_antes
@@ -95,8 +98,15 @@ def test_num_services_conta_corretamente(eng: FeatureEngineer) -> None:
 
 def test_num_services_zero_quando_sem_servicos(eng: FeatureEngineer) -> None:
     row = BASE_ROW.copy()
-    for col in ["phone_service", "online_security", "online_backup",
-                "device_protection", "tech_support", "streaming_tv", "streaming_movies"]:
+    for col in [
+        "phone_service",
+        "online_security",
+        "online_backup",
+        "device_protection",
+        "tech_support",
+        "streaming_tv",
+        "streaming_movies",
+    ]:
         row[col] = "No"
     out = eng.transform(pd.DataFrame([row]))
     assert out["num_services"].iloc[0] == 0
@@ -104,8 +114,15 @@ def test_num_services_zero_quando_sem_servicos(eng: FeatureEngineer) -> None:
 
 def test_num_services_maximo(eng: FeatureEngineer) -> None:
     row = BASE_ROW.copy()
-    for col in ["phone_service", "online_security", "online_backup",
-                "device_protection", "tech_support", "streaming_tv", "streaming_movies"]:
+    for col in [
+        "phone_service",
+        "online_security",
+        "online_backup",
+        "device_protection",
+        "tech_support",
+        "streaming_tv",
+        "streaming_movies",
+    ]:
         row[col] = "Yes"
     out = eng.transform(pd.DataFrame([row]))
     assert out["num_services"].iloc[0] == 7
@@ -254,12 +271,16 @@ def test_is_fiber_optic_falso_sem_internet(eng: FeatureEngineer) -> None:
 # ── validate_output ───────────────────────────────────────────────────────────
 
 
-def test_validate_output_passa_em_dados_validos(eng: FeatureEngineer, df: pd.DataFrame) -> None:
+def test_validate_output_passa_em_dados_validos(
+    eng: FeatureEngineer, df: pd.DataFrame
+) -> None:
     out = eng.transform(df)
     eng.validate_output(out)  # não deve levantar exceção
 
 
-def test_validate_output_falha_sem_feature(eng: FeatureEngineer, df: pd.DataFrame) -> None:
+def test_validate_output_falha_sem_feature(
+    eng: FeatureEngineer, df: pd.DataFrame
+) -> None:
     out = eng.transform(df)
     out = out.drop(columns=["num_services"])
     with pytest.raises(AssertionError):
@@ -273,28 +294,36 @@ def test_validate_output_falha_com_nulo(eng: FeatureEngineer, df: pd.DataFrame) 
         eng.validate_output(out)
 
 
-def test_validate_output_falha_binaria_fora_de_range(eng: FeatureEngineer, df: pd.DataFrame) -> None:
+def test_validate_output_falha_binaria_fora_de_range(
+    eng: FeatureEngineer, df: pd.DataFrame
+) -> None:
     out = eng.transform(df)
     out.loc[0, "is_month_to_month"] = 2
     with pytest.raises(AssertionError):
         eng.validate_output(out)
 
 
-def test_validate_output_falha_num_services_negativo(eng: FeatureEngineer, df: pd.DataFrame) -> None:
+def test_validate_output_falha_num_services_negativo(
+    eng: FeatureEngineer, df: pd.DataFrame
+) -> None:
     out = eng.transform(df)
     out.loc[0, "num_services"] = -1
     with pytest.raises(AssertionError):
         eng.validate_output(out)
 
 
-def test_validate_output_falha_charges_negativo(eng: FeatureEngineer, df: pd.DataFrame) -> None:
+def test_validate_output_falha_charges_negativo(
+    eng: FeatureEngineer, df: pd.DataFrame
+) -> None:
     out = eng.transform(df)
     out.loc[0, "charges_per_month"] = -5.0
     with pytest.raises(AssertionError):
         eng.validate_output(out)
 
 
-def test_validate_output_falha_tenure_group_invalido(eng: FeatureEngineer, df: pd.DataFrame) -> None:
+def test_validate_output_falha_tenure_group_invalido(
+    eng: FeatureEngineer, df: pd.DataFrame
+) -> None:
     out = eng.transform(df)
     out.loc[0, "tenure_group"] = "invalido"
     with pytest.raises(AssertionError):
@@ -304,7 +333,9 @@ def test_validate_output_falha_tenure_group_invalido(eng: FeatureEngineer, df: p
 # ── coluna ausente → ValueError ───────────────────────────────────────────────
 
 
-def test_transform_levanta_value_error_sem_coluna_obrigatoria(eng: FeatureEngineer) -> None:
+def test_transform_levanta_value_error_sem_coluna_obrigatoria(
+    eng: FeatureEngineer,
+) -> None:
     df_incompleto = pd.DataFrame([{"gender": "Female"}])
     with pytest.raises(ValueError, match="colunas obrigatórias ausentes"):
         eng.transform(df_incompleto)

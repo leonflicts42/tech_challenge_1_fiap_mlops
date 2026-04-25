@@ -78,6 +78,7 @@ _OPTUNA_PARAMS_GLOB: str = "optuna_best_params_*.json"
 REPORTS_JSON_DIR: Path = PROJECT_ROOT / "reports" / "json"
 OPTUNA_PARAMS_PATH: Path = REPORTS_JSON_DIR / "optuna_best_params.json"
 
+
 class ChurnPredictor:
     """Orquestra o pipeline completo de inferência de churn.
 
@@ -142,7 +143,9 @@ class ChurnPredictor:
             )
 
         state_dict = torch.load(path, map_location=self.device, weights_only=True)
-        model = ChurnMLPInference(input_dim=N_FEATURES_FINAL, hidden_dims=[128, 64], dropout=0.15)
+        model = ChurnMLPInference(
+            input_dim=N_FEATURES_FINAL, hidden_dims=[128, 64], dropout=0.15
+        )
         model.load_state_dict(state_dict)
         model.to(self.device)
         model.eval()
@@ -167,7 +170,11 @@ class ChurnPredictor:
             try:
                 params = json.loads(latest.read_text(encoding="utf-8"))
                 threshold = float(params.get("threshold", default))
-                logger.info("Threshold do Optuna | file=%s | threshold=%.4f", latest.name, threshold)
+                logger.info(
+                    "Threshold do Optuna | file=%s | threshold=%.4f",
+                    latest.name,
+                    threshold,
+                )
                 return threshold
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Falha ao ler Optuna (%s)", exc)
@@ -177,8 +184,12 @@ class ChurnPredictor:
         if winner_report.exists():
             try:
                 data = json.loads(winner_report.read_text(encoding="utf-8"))
-                threshold = float(data.get("test_metrics", {}).get("threshold", default))
-                logger.info("Threshold do winner_model_report | threshold=%.4f", threshold)
+                threshold = float(
+                    data.get("test_metrics", {}).get("threshold", default)
+                )
+                logger.info(
+                    "Threshold do winner_model_report | threshold=%.4f", threshold
+                )
                 return threshold
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Falha ao ler winner_model_report (%s)", exc)
@@ -248,10 +259,17 @@ class ChurnPredictor:
         logger.info(
             "predict() | pós-FE | shape=%s | novas_features_presentes=%s",
             df.shape,
-            all(f in df.columns for f in [
-                "num_services", "charges_per_month", "is_month_to_month",
-                "tenure_group", "has_security_support", "is_fiber_optic",
-            ]),
+            all(
+                f in df.columns
+                for f in [
+                    "num_services",
+                    "charges_per_month",
+                    "is_month_to_month",
+                    "tenure_group",
+                    "has_security_support",
+                    "is_fiber_optic",
+                ]
+            ),
         )
 
         # ── [5] ColumnTransformer (preprocessor.pkl) ─────────────────────────
@@ -279,14 +297,14 @@ class ChurnPredictor:
         if hasattr(X_transformed, "toarray"):
             X_transformed = X_transformed.toarray()
 
-        tensor = torch.from_numpy(
-            X_transformed.astype(np.float32)
-        ).to(self.device)  # shape (1, 30)
+        tensor = torch.from_numpy(X_transformed.astype(np.float32)).to(
+            self.device
+        )  # shape (1, 30)
 
         # ── [7+8] Forward pass + sigmoid → probabilidade ─────────────────────
         with torch.no_grad():
-            logit = self._model(tensor)          # shape (1, 1)
-            prob = torch.sigmoid(logit).item()   # float escalar ∈ [0, 1]
+            logit = self._model(tensor)  # shape (1, 1)
+            prob = torch.sigmoid(logit).item()  # float escalar ∈ [0, 1]
 
         # ── [9] Threshold → label + custo estimado ───────────────────────────
         is_churn = prob >= self._threshold

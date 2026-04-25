@@ -211,7 +211,11 @@ class ChurnRequest(BaseModel):
         normalized: dict[str, object] = {}
         for k, v in data.items():
             key = _KEY_ALIASES.get(to_snake_case(str(k)), to_snake_case(str(k)))
-            val = _CANONICAL.get(v.strip().lower(), v.strip()) if isinstance(v, str) else v
+            val = (
+                _CANONICAL.get(v.strip().lower(), v.strip())
+                if isinstance(v, str)
+                else v
+            )
             normalized[key] = val
         return normalized
 
@@ -231,10 +235,7 @@ class ChurnRequest(BaseModel):
             self.streaming_movies,
         ]
         if self.internet_service == "No":
-            active = [
-                v for v in internet_dependent
-                if v == "Yes"
-            ]
+            active = [v for v in internet_dependent if v == "Yes"]
             if active:
                 # Não levanta erro — SemanticNormalizer corrige no pipeline
                 # O validator registra para auditoria via logs da API

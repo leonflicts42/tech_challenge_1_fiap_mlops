@@ -70,21 +70,21 @@ for _dir in (
     _dir.mkdir(parents=True, exist_ok=True)
 
 # ── Target ────────────────────────────────────────────────────────────────────
-TARGET: str = "Churn Value"      # nome original no CSV (pré-snake_case)
-LABEL_COL: str = "Churn Label"   # versão string do target — removida no cleaning
+TARGET: str = "Churn Value"  # nome original no CSV (pré-snake_case)
+LABEL_COL: str = "Churn Label"  # versão string do target — removida no cleaning
 TARGET_COL: str = "churn_value"  # nome snake_case usado em todo o pipeline
 
 # ── Parâmetros do split ───────────────────────────────────────────────────────
 TEST_SIZE: float = 0.2  # 20% para holdout
-N_SPLITS: int = 5       # folds da validação cruzada estratificada
+N_SPLITS: int = 5  # folds da validação cruzada estratificada
 
 # ── Custos de negócio (R$) ────────────────────────────────────────────────────
 # FN: churner não detectado → perde o CLV do cliente
 # FP: cliente retido desnecessariamente → custo da campanha de retenção
-COST_CLV: float = 2_845.00        # R$ — receita anual média por cliente (CLV)
-COST_RETENTION: float = 73.52     # R$ — custo unitário de ação de retenção
-COST_FN: float = COST_CLV         # R$ — custo de perder churner não detectado
-COST_FP: float = COST_RETENTION   # R$ — custo de abordar não-churner
+COST_CLV: float = 2_845.00  # R$ — receita anual média por cliente (CLV)
+COST_RETENTION: float = 73.52  # R$ — custo unitário de ação de retenção
+COST_FN: float = COST_CLV  # R$ — custo de perder churner não detectado
+COST_FP: float = COST_RETENTION  # R$ — custo de abordar não-churner
 COST_RATIO: float = COST_FN / COST_FP  # ≈ 38.7 — FN custa ~39× mais que FP
 
 # ── SLO operacional ───────────────────────────────────────────────────────────
@@ -211,8 +211,8 @@ SERVICES_COLS: list[str] = [
 COLS_NUM_PIPE: list[str] = [
     "tenure_months",
     "monthly_charges",
-    "total_charges",      # skewness=0.962 — log1p corrige assimetria
-    "num_services",       # criada pelo FeatureEngineer
+    "total_charges",  # skewness=0.962 — log1p corrige assimetria
+    "num_services",  # criada pelo FeatureEngineer
     "charges_per_month",  # criada pelo FeatureEngineer
 ]
 
@@ -229,16 +229,16 @@ COLS_BINARY_PIPE: list[str] = [
     "streaming_tv",
     "streaming_movies",
     "paperless_billing",
-    "senior_citizen",     # já é 0/1 no raw — OrdinalEncoder preserva semântica
+    "senior_citizen",  # já é 0/1 no raw — OrdinalEncoder preserva semântica
 ]
 
 # Nominais (3+ categorias) → OneHotEncoder(drop="first") — evita dummy trap
 COLS_OHE_PIPE: list[str] = [
-    "internet_service",   # DSL / Fiber optic / No
-    "contract",           # Month-to-month / One year / Two year
-    "payment_method",     # 4 métodos de pagamento
-    "gender",             # Male / Female — mantido para análise de viés
-    "tenure_group",       # novo / medio / longo — criada pelo FeatureEngineer
+    "internet_service",  # DSL / Fiber optic / No
+    "contract",  # Month-to-month / One year / Two year
+    "payment_method",  # 4 métodos de pagamento
+    "gender",  # Male / Female — mantido para análise de viés
+    "tenure_group",  # novo / medio / longo — criada pelo FeatureEngineer
 ]
 
 # Features binárias criadas pelo FeatureEngineer → passthrough (já são int 0/1)

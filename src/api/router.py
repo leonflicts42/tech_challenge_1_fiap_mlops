@@ -61,8 +61,7 @@ async def health(request: Request) -> dict:
                 "model_loaded": False,
                 "preprocessor_loaded": False,
                 "detail": (
-                    "Artefatos de ML não carregados — "
-                    "verifique os logs de startup."
+                    "Artefatos de ML não carregados — verifique os logs de startup."
                 ),
             },
         )

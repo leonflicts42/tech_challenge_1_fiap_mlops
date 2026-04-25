@@ -120,9 +120,7 @@ class SemanticNormalizer(BaseEstimator, TransformerMixin):
                 if col not in X_out.columns:
                     continue
 
-                n_inconsistentes = int(
-                    (mask_sem_internet & (X_out[col] != "No")).sum()
-                )
+                n_inconsistentes = int((mask_sem_internet & (X_out[col] != "No")).sum())
 
                 if n_inconsistentes > 0:
                     X_out.loc[mask_sem_internet, col] = "No"

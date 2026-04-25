@@ -139,9 +139,7 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
     def _add_num_services(self, X: pd.DataFrame) -> pd.DataFrame:
         """Conta quantos dos 7 serviços estão ativos ("Yes") por cliente."""
         cols_present = [c for c in SERVICES_COLS if c in X.columns]
-        X["num_services"] = (
-            (X[cols_present] == "Yes").sum(axis=1).astype(int)
-        )
+        X["num_services"] = (X[cols_present] == "Yes").sum(axis=1).astype(int)
         logger.debug(
             "FeatureEngineer | num_services | min=%d | max=%d | média=%.2f",
             X["num_services"].min(),
@@ -152,9 +150,7 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
 
     def _add_charges_per_month(self, X: pd.DataFrame) -> pd.DataFrame:
         """Custo relativo ao tempo de casa: monthly_charges / (tenure + 1)."""
-        X["charges_per_month"] = (
-            X[_MONTHLY_COL] / (X[_TENURE_COL] + 1)
-        ).round(4)
+        X["charges_per_month"] = (X[_MONTHLY_COL] / (X[_TENURE_COL] + 1)).round(4)
         logger.debug(
             "FeatureEngineer | charges_per_month | min=%.2f | max=%.2f | média=%.2f",
             X["charges_per_month"].min(),
@@ -165,9 +161,7 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
 
     def _add_is_month_to_month(self, X: pd.DataFrame) -> pd.DataFrame:
         """Flag binária: 1 se contrato é Month-to-month."""
-        X["is_month_to_month"] = (
-            X[_CONTRACT_COL] == "Month-to-month"
-        ).astype(int)
+        X["is_month_to_month"] = (X[_CONTRACT_COL] == "Month-to-month").astype(int)
         logger.debug(
             "FeatureEngineer | is_month_to_month | n_mtm=%d (%.1f%%)",
             X["is_month_to_month"].sum(),
@@ -204,9 +198,7 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
 
     def _add_is_fiber_optic(self, X: pd.DataFrame) -> pd.DataFrame:
         """Flag: 1 se internet_service="Fiber optic"."""
-        X["is_fiber_optic"] = (
-            X[_INTERNET_COL] == "Fiber optic"
-        ).astype(int)
+        X["is_fiber_optic"] = (X[_INTERNET_COL] == "Fiber optic").astype(int)
         logger.debug(
             "FeatureEngineer | is_fiber_optic | n=%d (%.1f%%)",
             X["is_fiber_optic"].sum(),
@@ -307,8 +299,6 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
         assert (X_out["charges_per_month"] >= 0).all(), (
             "charges_per_month contém valores negativos"
         )
-        assert X_out["charges_per_month"].notna().all(), (
-            "charges_per_month contém NaN"
-        )
+        assert X_out["charges_per_month"].notna().all(), "charges_per_month contém NaN"
 
         logger.info("FeatureEngineer.validate_output() | todos os contratos OK")
