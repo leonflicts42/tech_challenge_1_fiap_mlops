@@ -15,7 +15,7 @@ import pytest
 import torch
 from torch import nn
 
-from churn_telecom.models.mlp import ChurnMLP, build_mlp
+from models.mlp import ChurnMLP, build_mlp
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

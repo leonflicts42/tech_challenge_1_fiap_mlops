@@ -1,8 +1,8 @@
-"""churn_telecom.models — MLP, trainer e avaliação."""
+"""models — MLP, trainer e avaliação."""
 
-from churn_telecom.models.mlp import ChurnMLP, build_mlp
-from churn_telecom.models.trainer import ChurnTrainer, EarlyStopping, TrainerConfig
-from churn_telecom.models.evaluation import (
+from models.mlp import ChurnMLP, build_mlp
+from models.trainer import ChurnTrainer, EarlyStopping, TrainerConfig
+from models.evaluation import (
     CostAnalyzer,
     CostConfig,
     MetricsCalculator,

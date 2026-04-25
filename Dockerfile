@@ -5,18 +5,26 @@ WORKDIR /app
 # Instala o uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Copia dependências
-COPY pyproject.toml uv.lock* ./
+# 1. Copia os arquivos de configuração E os metadados obrigatórios
+# O setuptools exige o README para construir o pacote local
+COPY pyproject.toml uv.lock* README.md ./
+
+# 2. Copia a pasta src ANTES de sincronizar
+# Sem isso, o uv não encontra o diretório 'src' definido no seu TOML
+COPY src/ ./src/
+
+# 3. Agora sim, sincroniza as dependências e instala o pacote local
 RUN uv sync --frozen --no-dev
 
-# Copia APENAS as pastas necessárias
-COPY src/ ./src/
-COPY tests/ ./tests/
+# 4. Copia o restante dos arquivos (testes, main, etc)
+COPY . .
 
 # Expõe a porta
 EXPOSE 5000
 
-# O segredo está aqui: chamamos "src.main:app"
-# E garantimos que o diretório atual (/app) está no PYTHONPATH
-ENV PYTHONPATH=/app
+# Garante que o ambiente virtual e a pasta src estejam no path
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH=/app/src
+
+# Comando para rodar (ajuste o caminho se seu main estiver dentro de churn_telecom)
 CMD ["/app/.venv/bin/uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "5000"]

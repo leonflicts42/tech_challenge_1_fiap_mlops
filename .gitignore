@@ -216,3 +216,6 @@ mlruns/
 !mlflow.dbmlflow.db
 
 mlflow.db
+
+.claudeignore
+.claude

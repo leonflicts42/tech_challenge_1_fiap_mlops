@@ -77,7 +77,7 @@ def _compute_auc(logits: torch.Tensor, targets: torch.Tensor) -> float:
 
 class EarlyStopping:
     """Para o treinamento quando val_loss não melhora por `patience` épocas."""
-
+    
     def __init__(self, patience: int = 10, min_delta: float = 1e-4) -> None:
         self.patience = patience
         self.min_delta = min_delta

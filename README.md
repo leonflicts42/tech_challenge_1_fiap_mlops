@@ -163,19 +163,13 @@ Uso:
 make pre-commit   # formata e checa antes de commitar
 ```
 
+
+
+```
 ```
 tech_challenge_1_fiap_mlops
 ├─ .dockerignore
 ├─ .python-version
-├─ churn_telecom
-│  ├─ config.py
-│  ├─ models
-│  │  ├─ evaluation.py
-│  │  ├─ expirement.py
-│  │  ├─ mlp.py
-│  │  └─ trainer.py
-│  ├─ plots.py
-│  └─ __init__.py
 ├─ data
 │  ├─ interim
 │  │  ├─ telco_droped.parquet
@@ -214,7 +208,6 @@ tech_challenge_1_fiap_mlops
 │  └─ tradeoff custo fp fp.md
 ├─ LICENSE
 ├─ logs
-├─ main.py
 ├─ Makefile
 ├─ models
 │  ├─ best_model_mlp.pt
@@ -222,11 +215,10 @@ tech_challenge_1_fiap_mlops
 │  │  └─ best_mlp.pt
 │  └─ preprocessor.pkl
 ├─ notebooks
-│  ├─ 05_mlp_optuna_unificado.ipynb
-│  ├─ 05_optuna_unificado_final.ipynb
 │  ├─ 1_vab_eda.ipynb
 │  ├─ 2_vab_preprocessing.ipynb
-│  └─ 3_vab_baselines_unificado.ipynb
+│  ├─ 3_vab_baselines_unificado.ipynb
+│  └─ 4_vab_mlp_vs_baselines.ipynb
 ├─ pyproject.toml
 ├─ README.md
 ├─ references
@@ -243,6 +235,7 @@ tech_challenge_1_fiap_mlops
 │  │  │  └─ logistic_threshold_f1_recall.png
 │  │  ├─ mlp
 │  │  │  ├─ correlacao
+│  │  │  │  └─ correlation_matrix_numeric.png
 │  │  │  └─ optuna_convergencia.png
 │  │  ├─ multivariada
 │  │  │  ├─ bivariate_cat_contract.png
@@ -263,11 +256,10 @@ tech_challenge_1_fiap_mlops
 │  │  │  ├─ bivariate_cat_tech_support.png
 │  │  │  ├─ bivariate_num_monthly charges.png
 │  │  │  ├─ bivariate_num_tenure months.png
-│  │  │  ├─ bivariate_num_total charges.png
-│  │  │  └─ correlacao
-│  │  │     ├─ correlation_matrix_numeric.png
-│  │  │     └─ vif_table.csv
+│  │  │  └─ bivariate_num_total charges.png
 │  │  └─ univariada
+│  │     ├─ churn_distribution.png
+│  │     ├─ missing_values.png
 │  │     ├─ univariate_cat_contract.png
 │  │     ├─ univariate_cat_dependents.png
 │  │     ├─ univariate_cat_device_protection.png
@@ -295,8 +287,25 @@ tech_challenge_1_fiap_mlops
 │     └─ winner_model_report.json
 ├─ requirements.txt
 ├─ src
-│  ├─ estrutura api.zip
-│  └─ main.py
+│  ├─ api
+│  │  ├─ middleware.py
+│  │  ├─ predictor.py
+│  │  ├─ router.py
+│  │  └─ schemas.py
+│  ├─ config.py
+│  ├─ data
+│  │  ├─ features.py
+│  │  └─ preprocessing.py
+│  ├─ main.py
+│  ├─ models
+│  │  ├─ evaluation.py
+│  │  ├─ experiment.py
+│  │  ├─ mlp.py
+│  │  ├─ mlp2.py
+│  │  └─ trainer.py
+│  ├─ utils
+│  │  └─ plots.py
+│  └─ __init__.py
 ├─ tests
 │  ├─ conftest.py
 │  ├─ test_etapa2.py

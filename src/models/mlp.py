@@ -125,12 +125,17 @@ def build_mlp(
     device      : sobrescreve ``config.DEVICE`` se fornecido.
     seed        : sobrescreve ``config.RANDOM_STATE`` se fornecido.
     """
-    from churn_telecom import config
+    from config import (
+        MLP_HIDDEN_DIMS,
+        MLP_DROPOUT,
+        DEVICE,
+        RANDOM_STATE,
+    )
 
-    hidden_dims = hidden_dims if hidden_dims is not None else config.MLP_HIDDEN_DIMS
-    dropout = dropout if dropout is not None else config.MLP_DROPOUT
-    device = device if device is not None else config.DEVICE
-    seed = seed if seed is not None else config.RANDOM_STATE
+    hidden_dims = hidden_dims if hidden_dims is not None else MLP_HIDDEN_DIMS
+    dropout = dropout if dropout is not None else MLP_DROPOUT
+    device = device if device is not None else DEVICE
+    seed = seed if seed is not None else RANDOM_STATE
 
     torch.manual_seed(seed)
     if torch.cuda.is_available():

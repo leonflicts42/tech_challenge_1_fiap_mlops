@@ -13,14 +13,14 @@ import numpy as np
 import pytest
 import torch
 
-from churn_telecom.models.evaluation import (
+from models.evaluation import (
     CostAnalyzer,
     CostConfig,
     MetricsCalculator,
     ModelComparator,
 )
-from churn_telecom.models.mlp import build_mlp
-from churn_telecom.models.trainer import ChurnTrainer, EarlyStopping, TrainerConfig
+from models.mlp import build_mlp
+from models.trainer import ChurnTrainer, EarlyStopping, TrainerConfig
 
 # ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -247,7 +247,7 @@ class TestCostAnalyzer:
 
 class TestModelComparator:
     def _make_metrics(self, name: str, auc: float):
-        from churn_telecom.models.evaluation import ModelMetrics
+        from models.evaluation import ModelMetrics
 
         return ModelMetrics(
             name=name,
