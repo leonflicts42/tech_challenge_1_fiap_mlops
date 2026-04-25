@@ -1,17 +1,17 @@
 import os
 import sys
+import pytest
+from fastapi.testclient import TestClient
 from unittest.mock import MagicMock
 
 # Ignora arquivos "copy" com espaços no nome (backups acidentais)
 collect_ignore_glob = ["*copy*"]
 
-import numpy as np
-import pytest
-from fastapi.testclient import TestClient
+
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
-from api.schemas import ChurnRequest, ChurnResponse  # noqa: E402
+from api.schemas import ChurnResponse  # noqa: E402
 from main import app  # noqa: E402
 
 VALID_PAYLOAD: dict = {

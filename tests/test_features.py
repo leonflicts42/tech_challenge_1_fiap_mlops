@@ -51,7 +51,7 @@ def test_fit_retorna_self(eng: FeatureEngineer, df: pd.DataFrame) -> None:
 
 
 def test_fit_com_y_retorna_self(eng: FeatureEngineer, df: pd.DataFrame) -> None:
-    import pandas as pd as _pd
+    import pandas as _pd 
     y = _pd.Series([0])
     assert eng.fit(df, y) is eng
 
