@@ -1,316 +1,287 @@
-total charge veio como string, converter para float
+# Churn Prediction — MLOps End-to-End
 
-Como outra pessoa rodará seu projeto?
-Em vez de baixar a pasta .venv, a pessoa baixará seu código e os arquivos do uv, então rodará:
+Projeto de predição de churn para uma operadora de telecomunicações, desenvolvido como Tech Challenge da Fase 1 do programa de pós-graduação em MLOps da FIAP.
 
-Bash
-uv sync
-Isso criará um ambiente virtual idêntico ao seu, de forma limpa e rápida.
+O modelo central é uma **Rede Neural MLP (PyTorch)** comparada com baselines Scikit-Learn, rastreada com MLflow e servida via **API FastAPI**.
 
+---
 
-rodar mlflow:
-```python
-python -m mlflow ui
+## Contexto de Negócio
+
+Uma operadora de telecomunicações enfrenta perda acelerada de clientes. Com taxa de churn de ~26%, o impacto financeiro estimado ultrapassa R$ 5 milhões anuais. O objetivo é classificar clientes com risco de cancelamento para permitir ações proativas de retenção.
+
+**Custo assimétrico:** Perder um cliente (FN) custa ~38,7× mais do que acionar uma campanha de retenção desnecessária (FP). O modelo foi calibrado para maximizar recall dentro de uma função de valor de negócio.
+
+---
+
+## Resultados do Modelo (Conjunto de Teste)
+
+| Métrica | Valor |
+|---------|-------|
+| ROC-AUC | **0.850** |
+| PR-AUC | 0.666 |
+| Recall | **98,9%** |
+| Precisão | 36,5% |
+| Threshold otimizado | 0.16 |
+| Valor de negócio estimado | **R$ 1.017.420** |
+
+Veja o [Model Card completo](docs/model_card.md) para performance detalhada, limitações, vieses e cenários de falha.
+
+---
+
+## Estrutura do Repositório
+
+```
+.
+├── data/
+│   ├── raw/          # Dataset original IBM Telco (.xlsx)
+│   ├── interim/      # Dados tipados e limpos (.parquet)
+│   └── processed/    # Train/test splits (.parquet)
+├── docs/             # Documentação técnica e analítica
+│   ├── model_card.md         # Model Card formal
+│   ├── monitoring_plan.md    # Plano de monitoramento
+│   ├── ml_canvas.md          # ML Canvas do projeto
+│   └── ...                   # Análises de EDA, features, baseline
+├── models/           # Artefatos treinados
+│   ├── best_model_mlp.pt     # Pesos do MLP (PyTorch)
+│   └── preprocessor.pkl      # Pipeline sklearn serializado
+├── notebooks/        # Análise exploratória e treinamento
+│   ├── 1_vab_eda.ipynb
+│   ├── 2_vab_preprocessing.ipynb
+│   ├── 3_vab_baselines_unificado.ipynb
+│   └── 4_vab_mlp_vs_baselines.ipynb
+├── reports/          # Métricas, figuras e JSONs de resultados
+├── src/              # Código-fonte do projeto
+│   ├── api/          # FastAPI (router, schemas, predictor, middleware)
+│   ├── data/         # Pré-processamento e feature engineering
+│   ├── models/       # MLP, trainer, evaluation, experiment
+│   ├── utils/        # Plots e business logic
+│   ├── config.py     # Single source of truth (paths, seeds, SLOs)
+│   └── main.py       # Entrypoint da API
+├── tests/            # Testes automatizados (pytest)
+├── Dockerfile        # Container de produção
+├── Makefile          # Comandos de lint, test e execução
+└── pyproject.toml    # Dependências, ruff, pytest
 ```
 
-baixar imagem python docker hub
-docker pull python:3.12-slim
-verificar vulnerabilidades
-docker scout quickview python:3.1
+---
 
-# 1. Clona
-git clone https://github.com/seu-usuario/churn-telecom.git
-cd churn-telecom
+## Setup e Instalação
 
-# 2. Cria e ativa o ambiente
+**Requisitos:** Python 3.12+
+
+### Instalação com pip
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/leonflicts42/tech_challenge_1_fiap_mlops.git
+cd tech_challenge_1_fiap_mlops
+
+# 2. Crie e ative o ambiente virtual
 python -m venv .venv
-.venv\Scripts\Activate.ps1   # PowerShell Windows
+source .venv/bin/activate        # Linux/Mac
+.venv\Scripts\Activate.ps1       # PowerShell (Windows)
 
-# 3. Instala o projeto — UMA linha resolve tudo
+# 3. Instale o projeto
 pip install -e .
+```
 
-
-# Git workflow — guia definitivo
-
-Ciclo de vida completo de uma feature, do início ao fim, usando `git` e `uv`.
-
----
-
-## 1. Sincronização inicial (obrigatório)
-
-Sempre comece garantindo que sua `main` local é o espelho exato da remota.
+### Instalação com uv (recomendado)
 
 ```bash
-git checkout main
-git pull origin main
+# Instala todas as dependências de forma reprodutível
+uv sync
 ```
 
 ---
 
-## 2. Criação da feature branch
-
-Crie a branch a partir da `main` atualizada. Use nomes descritivos.
+## Executando a API
 
 ```bash
-git checkout -b feature/analise-vif-mlflow
+# Com uvicorn direto
+uvicorn main:app --app-dir src --reload --port 8000
+
+# Com uv
+uv run uvicorn main:app --app-dir src --reload --port 8000
 ```
 
----
+A documentação interativa estará disponível em:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
-## 3. Ciclo de desenvolvimento
+### Endpoints
 
-Trabalhe no código. Como você está usando o `uv`, se adicionar pacotes, lembre-se do `uv add`.
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/api/v1/health` | Verifica status da API e do modelo |
+| `POST` | `/api/v1/predict` | Predição de churn para um cliente |
+
+### Exemplo de requisição
 
 ```bash
-# após as alterações
-git add .
-git commit -m "feat: implementa cálculo de VIF com add_constant e logs mlflow"
-git push origin feature/analise-vif-mlflow
+curl -X POST http://localhost:8000/api/v1/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gender": "Female",
+    "senior_citizen": 0,
+    "partner": "Yes",
+    "dependents": "No",
+    "tenure_months": 12,
+    "phone_service": "Yes",
+    "multiple_lines": "No",
+    "internet_service": "Fiber optic",
+    "online_security": "No",
+    "online_backup": "No",
+    "device_protection": "No",
+    "tech_support": "No",
+    "streaming_tv": "No",
+    "streaming_movies": "No",
+    "contract": "Month-to-month",
+    "paperless_billing": "Yes",
+    "payment_method": "Electronic check",
+    "monthly_charges": 70.35,
+    "total_charges": 844.20
+  }'
 ```
 
-### Convenção de mensagens de commit
+### Exemplo de resposta
 
-| Prefixo | Quando usar |
-|---|---|
-| `feat:` | nova funcionalidade |
-| `fix:` | correção de bug |
-| `chore:` | configuração, dependências |
-| `docs:` | documentação |
-| `refactor:` | refatoração sem mudança de comportamento |
-| `test:` | adição ou correção de testes |
-
----
-
-## 4. Pull request (PR) e code review
-
-1. Vá ao GitHub e abra o Pull Request.
-2. Analise seu próprio código (auto-review) e rode os testes de CI.
-3. No botão de merge do GitHub, selecione **Squash and Merge** — isso achata seus commits de "tentativa e erro" em um único commit limpo na `main`.
+```json
+{
+  "churn_probability": 0.87,
+  "churn_label": "churn",
+  "threshold_used": 0.16,
+  "cost_estimate_brl": 73.52,
+  "model_version": "best_model_mlp.pt"
+}
+```
 
 ---
 
-## 5. Limpeza e sincronização
-
-Após o merge na interface web, limpe o repositório local.
+## MLflow — Rastreamento de Experimentos
 
 ```bash
-# volta para a main
-git checkout main
+# Inicia a interface web do MLflow
+python -m mlflow ui --backend-store-uri sqlite:///mlflow.db
+```
 
-# atualiza a main local com o squash commit recém-mergeado
-git pull origin main
+Acesse em http://localhost:5000 para ver os experimentos, métricas por epoch e artefatos de todos os modelos treinados (MLP, RandomForest, GradientBoosting, LogisticRegression, DummyClassifier).
 
-# apaga a branch local que não serve mais
-git branch -d feature/analise-vif-mlflow
+---
 
-# limpa referências de branches apagadas no remoto
-git fetch --prune
+## Testes
+
+```bash
+# Executar todos os testes
+make test
+
+# Com cobertura
+pytest --cov=src --cov-report=html
+```
+
+O projeto possui **12 arquivos de teste** cobrindo smoke tests, schema validation (Pandera), testes de API, pré-processamento, feature engineering, treinamento do MLP e avaliação de métricas.
+
+---
+
+## Linting e Formatação
+
+```bash
+make format      # Formata código com ruff
+make lint        # Verifica erros de linting
+make pre-commit  # Executa format → lint → test em sequência
 ```
 
 ---
 
-## Resumo — loop mental para cada feature
+## Execução com Docker
 
-| Ação | Comando |
-|---|---|
-| Limpar/atualizar | `git checkout main && git pull origin main` |
-| Nova tarefa | `git checkout -b feature/nome-da-tarefa` |
-| Salvar | `git add . && git commit -m "..." && git push origin HEAD` |
-| Pós-merge | `git checkout main && git pull origin main && git branch -d feature/anterior` |
+```bash
+# Build da imagem
+docker build -t churn-api .
+
+# Executa o container
+docker run -p 8000:8000 churn-api
+```
 
 ---
 
-## Dica — lint e format antes do push
+## Arquitetura de Deploy
 
-Essencial para o critério de qualidade de código (20% da nota do Tech Challenge).
-Antes de cada `git commit`, rode:
+### Modo escolhido: Real-time (Online Inference)
 
-```bash
-uv run ruff check .    # linting — aponta erros
-uv run ruff format .   # formatação automática
-```
+A API foi implementada em modo **real-time (online inference)** via FastAPI, onde cada requisição resulta em uma predição imediata e síncrona.
 
-Para automatizar, adicione no `pyproject.toml`:
+**Justificativa:**
+- O caso de uso exige acionamento rápido da equipe de retenção no momento em que o cliente apresenta sinal de risco (ex.: abertura de chamado, consulta de planos concorrentes).
+- A latência de inferência do MLP é < 50 ms por requisição, viável para integração com CRM em tempo real.
+- O volume de requisições é baixo (poucos milhares de clientes/dia), sem necessidade de processamento batch.
 
-```toml
-[tool.ruff]
-line-length = 88
-target-version = "py310"
+**Alternativa batch (descartada):** Um pipeline batch diário seria adequado se o objetivo fosse apenas gerar listas de risco para campanhas de e-mail. Nesse cenário, a latência não importa, mas perde-se a capacidade de reagir a eventos em tempo real.
 
-[tool.ruff.lint]
-select = ["E", "F", "I", "W"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-```
-
-E no `Makefile` (raiz do projeto):
-
-```makefile
-lint:
-	uv run ruff check .
-
-format:
-	uv run ruff format .
-
-pre-commit: format lint
-```
-
-Uso:
-
-```bash
-make pre-commit   # formata e checa antes de commitar
-```
-
-
+### Componentes da arquitetura
 
 ```
+Cliente (CRM) → POST /api/v1/predict
+                    ↓
+              FastAPI (main.py)
+                    ↓
+         LatencyMiddleware (UUID, tempo)
+                    ↓
+           ChurnPredictor (predictor.py)
+            ↓                    ↓
+  preprocessor.pkl         best_model_mlp.pt
+  (ColumnTransformer)      (ChurnMLPInference)
+            ↓                    ↓
+     SemanticNormalizer     Forward pass (30 → 128 → 64 → 1)
+     FeatureEngineer        sigmoid → probabilidade
+            ↓                    ↓
+                   ChurnResponse (JSON)
 ```
-tech_challenge_1_fiap_mlops
-├─ .dockerignore
-├─ .python-version
-├─ data
-│  ├─ interim
-│  │  ├─ telco_droped.parquet
-│  │  └─ telco_typed.parquet
-│  ├─ processed
-│  │  ├─ test.npy
-│  │  ├─ test.parquet
-│  │  ├─ train.npy
-│  │  └─ train.parquet
-│  └─ raw
-│     ├─ raw_telco_customer_churn.xlsx
-│     └─ Telco_customer_churn.xlsx.zip
-├─ Dockerfile
-├─ docs
-│  ├─ ANALISE FINAL CONSOLIDADA 2.md
-│  ├─ ANALISE FINAL CONSOLIDADA.md
-│  ├─ analise_0.00_vab_project_descrition.md
-│  ├─ analise_0.01_vab_data_source.md
-│  ├─ analise_0.02_vab_eda_univariate.md
-│  ├─ analise_0.03_vab_eda_bivariate.md
-│  ├─ analise_0.04_vab_eda_multivariate.md
-│  ├─ analise_1.01_vab_data_cleaning.md
-│  ├─ analise_1.02_vab_feature_engineering.md
-│  ├─ analise_1.03_vab_preprocessing.md
-│  ├─ analise_3_baseline.md
-│  ├─ analise_4.01_vab_baseline_mlp.md
-│  ├─ analise_eda.md
-│  ├─ analise_etapa_2_mlp.md
-│  ├─ descrição de features.md
-│  ├─ metricas_tecnicas_negocios.md
-│  ├─ ml canvas metricas.md
-│  ├─ ml_canvas.md
-│  ├─ pipeline_data_to_baseline.html
-│  ├─ prd_etapa_2.md
-│  ├─ report_eda.md
-│  └─ tradeoff custo fp fp.md
-├─ LICENSE
-├─ logs
-├─ Makefile
-├─ models
-│  ├─ best_model_mlp.pt
-│  ├─ checkpoints
-│  │  └─ best_mlp.pt
-│  └─ preprocessor.pkl
-├─ notebooks
-│  ├─ 1_vab_eda.ipynb
-│  ├─ 2_vab_preprocessing.ipynb
-│  ├─ 3_vab_baselines_unificado.ipynb
-│  └─ 4_vab_mlp_vs_baselines.ipynb
-├─ pyproject.toml
-├─ README.md
-├─ references
-│  └─ references.md
-├─ reports
-│  ├─ figures
-│  │  ├─ baselines
-│  │  │  ├─ dummy_confusion_matrix.png
-│  │  │  ├─ dummy_roc_curve.png
-│  │  │  ├─ logistic_confusion_matrix.png
-│  │  │  ├─ logistic_feature_importance.png
-│  │  │  ├─ logistic_pr_curve.png
-│  │  │  ├─ logistic_roc_curve.png
-│  │  │  └─ logistic_threshold_f1_recall.png
-│  │  ├─ mlp
-│  │  │  ├─ correlacao
-│  │  │  │  └─ correlation_matrix_numeric.png
-│  │  │  └─ optuna_convergencia.png
-│  │  ├─ multivariada
-│  │  │  ├─ bivariate_cat_contract.png
-│  │  │  ├─ bivariate_cat_dependents.png
-│  │  │  ├─ bivariate_cat_device_protection.png
-│  │  │  ├─ bivariate_cat_gender.png
-│  │  │  ├─ bivariate_cat_internet_service.png
-│  │  │  ├─ bivariate_cat_multiple_lines.png
-│  │  │  ├─ bivariate_cat_online_backup.png
-│  │  │  ├─ bivariate_cat_online_security.png
-│  │  │  ├─ bivariate_cat_paperless_billing.png
-│  │  │  ├─ bivariate_cat_partner.png
-│  │  │  ├─ bivariate_cat_payment_method.png
-│  │  │  ├─ bivariate_cat_phone_service.png
-│  │  │  ├─ bivariate_cat_senior_citizen.png
-│  │  │  ├─ bivariate_cat_streaming_movies.png
-│  │  │  ├─ bivariate_cat_streaming_tv.png
-│  │  │  ├─ bivariate_cat_tech_support.png
-│  │  │  ├─ bivariate_num_monthly charges.png
-│  │  │  ├─ bivariate_num_tenure months.png
-│  │  │  └─ bivariate_num_total charges.png
-│  │  └─ univariada
-│  │     ├─ churn_distribution.png
-│  │     ├─ missing_values.png
-│  │     ├─ univariate_cat_contract.png
-│  │     ├─ univariate_cat_dependents.png
-│  │     ├─ univariate_cat_device_protection.png
-│  │     ├─ univariate_cat_gender.png
-│  │     ├─ univariate_cat_internet_service.png
-│  │     ├─ univariate_cat_multiple_lines.png
-│  │     ├─ univariate_cat_online_backup.png
-│  │     ├─ univariate_cat_online_security.png
-│  │     ├─ univariate_cat_paperless_billing.png
-│  │     ├─ univariate_cat_partner.png
-│  │     ├─ univariate_cat_payment_method.png
-│  │     ├─ univariate_cat_phone_service.png
-│  │     ├─ univariate_cat_senior_citizen.png
-│  │     ├─ univariate_cat_streaming_movies.png
-│  │     ├─ univariate_cat_streaming_tv.png
-│  │     ├─ univariate_cat_tech_support.png
-│  │     ├─ univariate_num_monthly_charges.png
-│  │     ├─ univariate_num_tenure_months.png
-│  │     ├─ univariate_num_total_charges.png
-│  │     ├─ univariate_skew_kurt_monthly_charges.png
-│  │     ├─ univariate_skew_kurt_tenure_months.png
-│  │     └─ univariate_skew_kurt_total_charges.png
-│  └─ json
-│     ├─ optuna_best_params.json
-│     └─ winner_model_report.json
-├─ requirements.txt
-├─ src
-│  ├─ api
-│  │  ├─ middleware.py
-│  │  ├─ predictor.py
-│  │  ├─ router.py
-│  │  └─ schemas.py
-│  ├─ config.py
-│  ├─ data
-│  │  ├─ features.py
-│  │  └─ preprocessing.py
-│  ├─ main.py
-│  ├─ models
-│  │  ├─ evaluation.py
-│  │  ├─ experiment.py
-│  │  ├─ mlp.py
-│  │  ├─ mlp2.py
-│  │  └─ trainer.py
-│  ├─ utils
-│  │  └─ plots.py
-│  └─ __init__.py
-├─ tests
-│  ├─ conftest.py
-│  ├─ test_etapa2.py
-│  ├─ test_main.py
-│  └─ test_mlp.py
-└─ uv.lock
+
+### Pipeline de dados (offline)
 
 ```
+data/raw/ (xlsx)
+    ↓ [notebooks/2_vab_preprocessing.ipynb]
+data/interim/ (parquet tipado + limpo)
+    ↓ [SemanticNormalizer + FeatureEngineer + ColumnTransformer]
+data/processed/ (train.parquet + test.parquet)
+    ↓ [notebooks/4_vab_mlp_vs_baselines.ipynb + MLflow]
+models/ (best_model_mlp.pt + preprocessor.pkl)
+    ↓
+API (src/)
+```
+
+---
+
+## Documentação Adicional
+
+| Documento | Descrição |
+|-----------|-----------|
+| [Model Card](docs/model_card.md) | Performance, limitações, vieses e cenários de falha |
+| [Plano de Monitoramento](docs/monitoring_plan.md) | Métricas, alertas e playbook de incidentes |
+| [ML Canvas](docs/ml_canvas.md) | Formulação do problema e stakeholders |
+| [EDA](docs/analise_eda.md) | Análise exploratória dos dados |
+| [Trade-off de Custo](docs/tradeoff%20custo%20fp%20fp.md) | Análise FP vs FN com CLV |
+
+---
+
+## Dataset
+
+**IBM Telco Customer Churn** (público) — 7.043 clientes, 33 variáveis, 26,4% de taxa de churn.
+
+Fonte: [Kaggle — Telco Customer Churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)
+
+---
+
+## Dependências Principais
+
+| Biblioteca | Versão | Uso |
+|------------|--------|-----|
+| PyTorch | ≥ 2.11 | Treinamento e inferência do MLP |
+| Scikit-Learn | ≥ 1.4 | Pipelines de pré-processamento e baselines |
+| MLflow | ≥ 3.0 | Rastreamento de experimentos |
+| FastAPI | ≥ 0.135 | API de inferência |
+| Optuna | ≥ 4.8 | Otimização de hiperparâmetros |
+
+Veja todas as dependências em [pyproject.toml](pyproject.toml).

@@ -68,6 +68,19 @@ class TestChurnRequestValidation:
         req = ChurnRequest(**valid_payload)
         assert req.total_charges == 0.0
 
+    def test_normalize_inputs_ignora_nao_dict(self) -> None:
+        """normalize_inputs retorna inalterado se não for dict."""
+        result = ChurnRequest.normalize_inputs("not_a_dict")
+        assert result == "not_a_dict"
+
+    def test_internet_inconsistency_nao_rejeita_requisicao(self, valid_payload: dict) -> None:
+        """internet_service=No com serviço ativo não levanta erro (SemanticNormalizer corrige)."""
+        valid_payload["internet_service"] = "No"
+        valid_payload["online_security"] = "Yes"
+        req = ChurnRequest(**valid_payload)
+        assert req.internet_service == "No"
+        assert req.online_security == "Yes"
+
 
 class TestChurnResponseSchema:
     def test_response_valida(self) -> None:

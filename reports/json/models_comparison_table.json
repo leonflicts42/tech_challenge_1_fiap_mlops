@@ -1,0 +1,72 @@
+{
+  "timestamp": "2026-04-25T19:47:07.935236",
+  "slo_recall_min": 0.7,
+  "cost_function": {
+    "TP": 2845.0,
+    "TN": 73.52,
+    "FN": -2845.0,
+    "FP": -73.52
+  },
+  "models": [
+    {
+      "roc_auc": 0.849974,
+      "pr_auc": 0.666326,
+      "recall": 0.989247,
+      "precision": 0.365079,
+      "f1": 0.533333,
+      "tp": 368,
+      "tn": 393,
+      "fp": 640,
+      "fn": 4,
+      "business_value": 1017420.56,
+      "threshold": 0.16,
+      "slo_ok": "True",
+      "model": "MLP"
+    },
+    {
+      "roc_auc": 0.844319,
+      "pr_auc": 0.667356,
+      "recall": 0.978495,
+      "precision": 0.360396,
+      "f1": 0.526773,
+      "tp": 364,
+      "tn": 387,
+      "fp": 646,
+      "fn": 8,
+      "business_value": 993778.32,
+      "threshold": 0.06,
+      "slo_ok": "True",
+      "model": "RandomForest"
+    },
+    {
+      "roc_auc": 0.85092,
+      "pr_auc": 0.675362,
+      "recall": 0.997312,
+      "precision": 0.316823,
+      "f1": 0.480881,
+      "tp": 371,
+      "tn": 233,
+      "fp": 800,
+      "fn": 1,
+      "business_value": 1010964.16,
+      "threshold": 0.07,
+      "slo_ok": "True",
+      "model": "GradientBoosting"
+    },
+    {
+      "roc_auc": 0.847122,
+      "pr_auc": 0.660177,
+      "recall": 0.989247,
+      "precision": 0.358674,
+      "f1": 0.526466,
+      "tp": 368,
+      "tn": 375,
+      "fp": 658,
+      "fn": 4,
+      "business_value": 1014773.84,
+      "threshold": 0.08,
+      "slo_ok": "True",
+      "model": "LogisticRegression"
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 from fastapi.testclient import TestClient
 
 from main import app
@@ -195,3 +197,31 @@ class TestPayloadVariants:
         test_client.post("/api/v1/predict", json=valid_payload)
         test_client.post("/api/v1/predict", json=raw_payload_33)
         assert app.state.predictor.predict.call_count == 2
+
+
+class TestRootEndpoint:
+    def test_root_retorna_links(self, test_client: TestClient) -> None:
+        r = test_client.get("/")
+        assert r.status_code == 200
+        body = r.json()
+        assert "docs" in body
+        assert "health" in body
+        assert "predict" in body
+
+
+class TestPredictErrorHandlers:
+    def test_value_error_no_pipeline_retorna_422(
+        self, test_client: TestClient, valid_payload: dict
+    ) -> None:
+        app.state.predictor.predict.side_effect = ValueError("shape inesperado")
+        r = test_client.post("/api/v1/predict", json=valid_payload)
+        assert r.status_code == 422
+        app.state.predictor.predict.side_effect = None
+
+    def test_excecao_generica_retorna_500(
+        self, test_client: TestClient, valid_payload: dict
+    ) -> None:
+        app.state.predictor.predict.side_effect = RuntimeError("erro inesperado")
+        r = test_client.post("/api/v1/predict", json=valid_payload)
+        assert r.status_code == 500
+        app.state.predictor.predict.side_effect = None
