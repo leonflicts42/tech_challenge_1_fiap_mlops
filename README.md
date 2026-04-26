@@ -1,76 +1,225 @@
 # Churn Prediction — MLOps End-to-End
 
-Projeto de predição de churn para uma operadora de telecomunicações, desenvolvido como Tech Challenge da Fase 1 do programa de pós-graduação em MLOps da FIAP.
+**Tech Challenge Fase 1 — Pós-Graduação em MLOps · FIAP**
 
-O modelo central é uma **Rede Neural MLP (PyTorch)** comparada com baselines Scikit-Learn, rastreada com MLflow e servida via **API FastAPI**.
+Pipeline completo de Machine Learning para predição de churn em uma operadora de telecomunicações — do entendimento do negócio ao modelo servido via API, com rastreamento de experimentos, testes automatizados e containerização.
 
 ---
 
 ## Contexto de Negócio
 
-Uma operadora de telecomunicações enfrenta perda acelerada de clientes. Com taxa de churn de ~26%, o impacto financeiro estimado ultrapassa R$ 5 milhões anuais. O objetivo é classificar clientes com risco de cancelamento para permitir ações proativas de retenção.
+Uma operadora de telecomunicações perde **26,5% dos seus clientes** anualmente, destruindo ~**US$ 3,79 M** em receita futura contratada e não realizada. A diretoria precisa de um modelo preditivo capaz de identificar, com antecedência, quais clientes têm risco de cancelar — permitindo que a equipe de retenção aja antes que o cancelamento ocorra.
 
-**Custo assimétrico:** Perder um cliente (FN) custa ~38,7× mais do que acionar uma campanha de retenção desnecessária (FP). O modelo foi calibrado para maximizar recall dentro de uma função de valor de negócio.
+### Assimetria de Custo
+
+O ponto central do problema é a **diferença brutal de custo entre os tipos de erro**:
+
+| Erro | Significado | Custo |
+|------|-------------|-------|
+| **Falso Negativo (FN)** | Churner real não detectado → cliente perdido | **US$ 2.845** (CLV médio residual) |
+| **Falso Positivo (FP)** | Cliente retido sem necessidade → ação desnecessária | **US$ 73,52** (desconto de 10% oferecido) |
+| **Razão FN/FP** | Perder um cliente custa 38,7× mais do que uma ação desnecessária | **38,7×** |
+
+Por isso, o threshold de decisão **não foi escolhido pelo F1**, e sim por uma **função de valor de negócio** que otimiza o retorno financeiro real sob a restrição de Recall ≥ 70% (SLO operacional).
+
+### Recuperação Estimada com o Modelo
+
+Com Recall de 70% e taxa de conversão de campanha de 50%:
+
+| Churners detectados/ano | Retidos efetivamente | Receita recuperada | Custo de descontos | **Resultado líquido** |
+|---|---|---|---|---|
+| 960 / 1.371 | 480 | US$ 1,326 M | US$ 35 K | **US$ 1,291 M** |
 
 ---
 
-## Resultados do Modelo (Conjunto de Teste)
+## Dataset
+
+**IBM Telco Customer Churn** (público) — 7.043 clientes, 33 variáveis originais, **26,5% de taxa de churn**.
+
+| Campo | Valor |
+|-------|-------|
+| Fonte | [Kaggle — Telco Customer Churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn) |
+| Registros | 7.043 clientes |
+| Features após pré-processamento | 30 |
+| Missing values | 11 (0,16%) em `Total Charges` → imputados com mediana |
+| Split treino/teste | 80% / 20% estratificado por `churn` |
+
+### Variáveis mais preditivas
+
+| Feature | Tipo | Associação com churn |
+|---------|------|----------------------|
+| `tenure_months` | Numérica | Maior separabilidade (Cohen's d = −0,89) |
+| `contract` | Categórica | Month-to-month: 42,7% de churn (Cramer's V = 0,41) |
+| `internet_service` | Categórica | Fiber optic: 41,9% de churn (V = 0,35) |
+| `online_security` | Categórica | Ausente: 41,8% de churn |
+| `tech_support` | Categórica | Ausente: 41,6% de churn |
+| `monthly_charges` | Numérica | Cohen's d = +0,47 |
+
+Features removidas: IDs geográficos, e variáveis pós-evento que causariam data leakage (`Churn Score`, `Churn Reason`, `CLTV`).
+
+---
+
+## Resultados
+
+### Modelo Vencedor — MLP (PyTorch)
 
 | Métrica | Valor |
 |---------|-------|
-| ROC-AUC | **0.850** |
-| PR-AUC | 0.666 |
-| Recall | **98,9%** |
+| **ROC-AUC** | 0,850 |
+| **PR-AUC** | 0,666 |
+| **Recall** | **98,9%** ✅ SLO atendido |
 | Precisão | 36,5% |
-| Threshold otimizado | 0.16 |
-| Valor de negócio estimado | **R$ 1.017.420** |
+| F1-score | 0,533 |
+| FN (clientes perdidos) | **4** |
+| FP (ações desnecessárias) | 640 |
+| **Valor de negócio (teste)** | **R$ 1.017.420** |
+| Threshold otimizado | 0,16 |
 
-Veja o [Model Card completo](docs/model_card.md) para performance detalhada, limitações, vieses e cenários de falha.
+### Comparativo de Modelos (conjunto de teste, threshold otimizado por negócio)
+
+| Modelo | ROC-AUC | PR-AUC | Recall | FN | Valor de Negócio |
+|--------|---------|--------|--------|-----|-----------------|
+| **MLP (selecionado)** | **0,850** | 0,666 | **98,9%** | **4** | **R$ 1.017.420** |
+| GradientBoosting | 0,851 | 0,675 | 99,7% | 1 | R$ 1.010.964 |
+| LogisticRegression | 0,847 | 0,660 | 98,9% | 4 | R$ 1.014.773 |
+| RandomForest | 0,844 | 0,667 | 97,8% | 8 | R$ 993.778 |
+| DummyClassifier | 0,500 | 0,265 | 0,0% | — | −R$ 636.000 |
+
+> O MLP foi selecionado por apresentar o **maior valor de negócio** no conjunto de teste, com o segundo menor número de FN entre todos os modelos.
 
 ---
 
-## Estrutura do Repositório
+## Cobertura dos Requisitos do Tech Challenge
+
+### Etapa 1 — Entendimento e Preparação
+
+| Requisito | Entregável |
+|-----------|-----------|
+| ML Canvas (stakeholders, métricas de negócio, SLOs) | [`docs/ml_canvas.md`](docs/ml_canvas.md) |
+| EDA completa (volume, qualidade, distribuição, data readiness) | [`notebooks/1_vab_eda.ipynb`](notebooks/1_vab_eda.ipynb) |
+| Métrica técnica (AUC-ROC, PR-AUC, F1) e métrica de negócio | [`docs/metricas_tecnicas_negocios.md`](docs/metricas_tecnicas_negocios.md) |
+| DummyClassifier + Regressão Logística (Scikit-Learn) | [`notebooks/3_vab_baselines_unificado.ipynb`](notebooks/3_vab_baselines_unificado.ipynb) |
+| Experimentos registrados no MLflow | `mlflow.db` + `mlartifacts/` |
+
+### Etapa 2 — Modelagem com Redes Neurais
+
+| Requisito | Entregável |
+|-----------|-----------|
+| MLP em PyTorch (arquitetura, ativação, loss) | [`src/models/mlp2.py`](src/models/mlp2.py) — [128, 64], ReLU, BCEWithLogitsLoss, LayerNorm |
+| Loop de treinamento com early stopping e batching | [`src/models/trainer.py`](src/models/trainer.py) — EarlyStopping(patience=15), batch=128, AdamW |
+| Comparação MLP vs baselines (≥ 4 métricas) | ROC-AUC, PR-AUC, F1, Recall, Precision, Specificity |
+| Análise de trade-off de custo (FP vs FN) | [`docs/tradeoff custo fp fp.md`](docs/tradeoff%20custo%20fp%20fp.md) — razão 38,7:1 documentada |
+| Todos os experimentos no MLflow | [`notebooks/4_vab_mlp_vs_baselines.ipynb`](notebooks/4_vab_mlp_vs_baselines.ipynb) — Optuna + MLflow |
+| Modelo vencedor no MLflow Model Registry | `mlflow.register_model("ChurnMLP", alias="champion")` |
+
+### Etapa 3 — Engenharia e API
+
+| Requisito | Entregável |
+|-----------|-----------|
+| Código refatorado em módulos (`src/`) | [`src/api/`](src/api/), [`src/data/`](src/data/), [`src/models/`](src/models/), [`src/utils/`](src/utils/) |
+| Pipeline reprodutível (sklearn + transformadores custom) | `SemanticNormalizer` → `FeatureEngineer` → `ColumnTransformer` |
+| Testes (pytest): unitários, schema (pandera), smoke | 12 arquivos em [`tests/`](tests/) |
+| API FastAPI: `/predict`, `/health`, validação Pydantic | [`src/api/router.py`](src/api/router.py), [`src/api/schemas.py`](src/api/schemas.py) |
+| Logging estruturado + middleware de latência | `get_logger()` em [`src/config.py`](src/config.py), [`src/api/middleware.py`](src/api/middleware.py) |
+| `pyproject.toml` + `ruff` + `Makefile` | `make lint`, `make test`, `make pre-commit` |
+
+### Etapa 4 — Documentação e Entrega Final
+
+| Requisito | Entregável |
+|-----------|-----------|
+| Model Card (performance, limitações, vieses, falhas) | [`docs/model_card.md`](docs/model_card.md) |
+| Arquitetura de deploy (batch vs real-time + justificativa) | Seção [Arquitetura de Deploy](#arquitetura-de-deploy) neste README |
+| Plano de monitoramento (métricas, alertas, playbook) | [`docs/monitoring_plan.md`](docs/monitoring_plan.md) |
+| README completo | Este arquivo |
+
+---
+
+## Arquitetura do Projeto
 
 ```
 .
 ├── data/
-│   ├── raw/          # Dataset original IBM Telco (.xlsx)
-│   ├── interim/      # Dados tipados e limpos (.parquet)
-│   └── processed/    # Train/test splits (.parquet)
-├── docs/             # Documentação técnica e analítica
-│   ├── model_card.md         # Model Card formal
-│   ├── monitoring_plan.md    # Plano de monitoramento
-│   ├── ml_canvas.md          # ML Canvas do projeto
-│   └── ...                   # Análises de EDA, features, baseline
-├── models/           # Artefatos treinados
-│   ├── best_model_mlp.pt     # Pesos do MLP (PyTorch)
-│   └── preprocessor.pkl      # Pipeline sklearn serializado
-├── notebooks/        # Análise exploratória e treinamento
-│   ├── 1_vab_eda.ipynb
-│   ├── 2_vab_preprocessing.ipynb
-│   ├── 3_vab_baselines_unificado.ipynb
-│   └── 4_vab_mlp_vs_baselines.ipynb
-├── reports/          # Métricas, figuras e JSONs de resultados
-├── src/              # Código-fonte do projeto
-│   ├── api/          # FastAPI (router, schemas, predictor, middleware)
-│   ├── data/         # Pré-processamento e feature engineering
-│   ├── models/       # MLP, trainer, evaluation, experiment
-│   ├── utils/        # Plots e business logic
-│   ├── config.py     # Single source of truth (paths, seeds, SLOs)
-│   └── main.py       # Entrypoint da API
-├── tests/            # Testes automatizados (pytest)
-├── Dockerfile        # Container de produção
-├── Makefile          # Comandos de lint, test e execução
-└── pyproject.toml    # Dependências, ruff, pytest
+│   ├── raw/              # Dataset original IBM Telco (.xlsx)
+│   ├── interim/          # Dados tipados e limpos (.parquet)
+│   └── processed/        # train.parquet (80%) · test.parquet (20%)
+├── docs/                 # Documentação técnica e analítica
+│   ├── model_card.md     # Model Card formal
+│   ├── monitoring_plan.md# Plano de monitoramento
+│   ├── ml_canvas.md      # ML Canvas
+│   └── ...               # EDA, feature engineering, baselines, trade-off
+├── models/
+│   ├── best_model_mlp.pt # Pesos do MLP (PyTorch state_dict)
+│   └── preprocessor.pkl  # Pipeline sklearn serializado
+├── notebooks/
+│   ├── 1_vab_eda.ipynb               # EDA completa
+│   ├── 2_vab_preprocessing.ipynb     # Pipeline de dados
+│   ├── 3_vab_baselines_unificado.ipynb # Baselines + MLflow
+│   └── 4_vab_mlp_vs_baselines.ipynb  # MLP + Optuna + Model Registry
+├── reports/
+│   ├── figures/          # Plots EDA, baselines e MLP
+│   └── json/             # Métricas, parâmetros Optuna, tabela comparativa
+├── src/
+│   ├── api/              # FastAPI (router, schemas, predictor, middleware)
+│   ├── data/             # SemanticNormalizer, FeatureEngineer
+│   ├── models/           # ChurnMLPv2, trainer, evaluation, experiment
+│   ├── utils/            # Plots e business logic
+│   ├── config.py         # Single source of truth (paths, seeds, SLOs, custos)
+│   └── main.py           # Entrypoint da API
+├── tests/                # 12 arquivos de teste (pytest)
+├── Dockerfile            # Container de produção (Python 3.12-slim + uv)
+├── Makefile              # lint · format · test · pre-commit
+└── pyproject.toml        # Dependências, ruff, pytest, taskipy
 ```
 
 ---
 
-## Setup e Instalação
+## Pipeline de Dados e Treinamento
 
-**Requisitos:** Python 3.12+
+```
+data/raw/ (.xlsx)
+    │
+    ▼ notebooks/2_vab_preprocessing.ipynb
+data/interim/ (tipagem + limpeza + feature engineering)
+    │
+    ▼ SemanticNormalizer → FeatureEngineer → ColumnTransformer
+data/processed/ (train.parquet · test.parquet)
+    │
+    ▼ notebooks/3 (baselines) + notebooks/4 (MLP + Optuna)
+models/ (best_model_mlp.pt · preprocessor.pkl)
+    │
+    ▼ MLflow Model Registry (ChurnMLP@champion)
+    │
+    ▼ src/ → API FastAPI
+```
 
-### Instalação com pip
+### Pré-processamento
+
+| Etapa | Transformador | Operação |
+|-------|---------------|----------|
+| Normalização semântica | `SemanticNormalizer` | "No internet service" → "No" |
+| Feature engineering | `FeatureEngineer` | 6 features derivadas |
+| Numéricas (3) | `SimpleImputer` + `log1p` + `StandardScaler` | Imputa, normaliza skew, padroniza |
+| Binárias (11) | `OrdinalEncoder` | ["No", "Yes"] → [0, 1] |
+| Nominais (6) | `OneHotEncoder(drop='first')` | Dummy encoding |
+
+### Features Derivadas
+
+| Feature | Descrição |
+|---------|-----------|
+| `num_services` | Contagem de serviços ativos (âncora de retenção) |
+| `charges_per_month` | `monthly_charges / (tenure + 1)` |
+| `is_month_to_month` | Flag do contrato mais associado ao churn |
+| `tenure_group` | Buckets novo / médio / longo — captura não-linearidade dos primeiros 12 meses |
+| `has_security_support` | Online Security OR Tech Support |
+| `is_fiber_optic` | Fibra ótica tem 2× mais churn que DSL |
+
+---
+
+## Instalação e Setup
+
+**Requisitos:** Python 3.12+ · Git
+
+### Com pip
 
 ```bash
 # 1. Clone o repositório
@@ -79,41 +228,42 @@ cd tech_challenge_1_fiap_mlops
 
 # 2. Crie e ative o ambiente virtual
 python -m venv .venv
-source .venv/bin/activate        # Linux/Mac
-.venv\Scripts\Activate.ps1       # PowerShell (Windows)
+source .venv/bin/activate          # Linux/Mac
+.venv\Scripts\Activate.ps1         # PowerShell (Windows)
 
-# 3. Instale o projeto
+# 3. Instale o projeto em modo editável
 pip install -e .
 ```
 
-### Instalação com uv (recomendado)
+### Com uv (recomendado — reprodutível via uv.lock)
 
 ```bash
-# Instala todas as dependências de forma reprodutível
+git clone https://github.com/leonflicts42/tech_challenge_1_fiap_mlops.git
+cd tech_challenge_1_fiap_mlops
 uv sync
 ```
 
 ---
 
-## Executando a API
+## Executando a API Localmente
 
 ```bash
-# Com uvicorn direto
-uvicorn main:app --app-dir src --reload --port 8000
-
 # Com uv
-uv run uvicorn main:app --app-dir src --reload --port 8000
+uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Ou com o ambiente ativado
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-A documentação interativa estará disponível em:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+A documentação interativa estará em:
+- **Swagger UI:** http://localhost:8000/docs
+- **ReDoc:** http://localhost:8000/redoc
 
-### Endpoints
+### Endpoints disponíveis
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `GET` | `/api/v1/health` | Verifica status da API e do modelo |
+| `GET` | `/api/v1/health` | Status da API e do modelo carregado |
 | `POST` | `/api/v1/predict` | Predição de churn para um cliente |
 
 ### Exemplo de requisição
@@ -158,14 +308,72 @@ curl -X POST http://localhost:8000/api/v1/predict \
 
 ---
 
+## Executando com Docker
+
+### Build e execução local
+
+```bash
+# Build da imagem
+docker build -t churn-api .
+
+# Executar o container (porta 5000)
+docker run -p 5000:5000 churn-api
+```
+
+A API ficará disponível em http://localhost:5000/docs
+
+### Passando os artefatos do modelo para o container
+
+Por padrão, os artefatos (`models/best_model_mlp.pt` e `models/preprocessor.pkl`) são copiados para dentro da imagem no `docker build`. Se quiser montar um volume externo para facilitar atualizações de modelo sem rebuild:
+
+```bash
+docker run -p 5000:5000 \
+  -v $(pwd)/models:/app/models \
+  churn-api
+```
+
+### Verificar se a API está saudável
+
+```bash
+curl http://localhost:5000/api/v1/health
+```
+
+Resposta esperada:
+
+```json
+{
+  "status": "ok",
+  "model_loaded": true,
+  "preprocessor_loaded": true,
+  "model_version": "best_model_mlp.pt",
+  "threshold": 0.16
+}
+```
+
+---
+
 ## MLflow — Rastreamento de Experimentos
 
 ```bash
-# Inicia a interface web do MLflow
+# Iniciar a interface web do MLflow
 python -m mlflow ui --backend-store-uri sqlite:///mlflow.db
+
+# Com uv
+uv run mlflow ui --backend-store-uri sqlite:///mlflow.db
 ```
 
-Acesse em http://localhost:5000 para ver os experimentos, métricas por epoch e artefatos de todos os modelos treinados (MLP, RandomForest, GradientBoosting, LogisticRegression, DummyClassifier).
+Acesse em **http://localhost:5000** para visualizar:
+- Todos os experimentos: Optuna trials (50 por modelo), runs de validação, run do vencedor
+- Métricas por epoch do MLP (loss, AUC)
+- Datasets rastreados (train/test com MD5)
+- **Model Registry:** `ChurnMLP` com alias `champion`
+
+Para carregar o modelo registrado:
+
+```python
+import mlflow.pytorch
+model = mlflow.pytorch.load_model("models:/ChurnMLP@champion")
+```
 
 ---
 
@@ -175,82 +383,90 @@ Acesse em http://localhost:5000 para ver os experimentos, métricas por epoch e 
 # Executar todos os testes
 make test
 
-# Com cobertura
+# Com relatório de cobertura
 pytest --cov=src --cov-report=html
+# Abrir htmlcov/index.html no navegador
 ```
 
-O projeto possui **12 arquivos de teste** cobrindo smoke tests, schema validation (Pandera), testes de API, pré-processamento, feature engineering, treinamento do MLP e avaliação de métricas.
+### Suíte de testes (12 arquivos)
+
+| Arquivo | Cobertura |
+|---------|-----------|
+| `test_smoke.py` | Smoke tests — API inicia e responde |
+| `test_schema.py` | Validação Pydantic — campos, tipos, ranges |
+| `test_api.py` | Endpoints `/health` e `/predict` — 18+ cenários |
+| `test_main.py` | Configuração e inicialização da aplicação |
+| `test_preprocessing.py` | `SemanticNormalizer` — transformações e consistência |
+| `test_features.py` | `FeatureEngineer` — 6 features, 36+ cenários |
+| `test_predictor.py` | Pipeline completo de inferência end-to-end |
+| `test_evaluation.py` | Métricas e `CostAnalyzer` |
+| `test_mlp.py` | Arquitetura MLP — forward, backward, inicialização |
+| `test_mlp2.py` | `ChurnMLPInference` — compatibilidade de checkpoint |
+| `test_etapa2.py` | Testes de integração da modelagem |
+| `conftest.py` | Fixtures compartilhados (payloads, mock predictor) |
 
 ---
 
-## Linting e Formatação
+## Linting e Qualidade de Código
 
 ```bash
-make format      # Formata código com ruff
-make lint        # Verifica erros de linting
-make pre-commit  # Executa format → lint → test em sequência
+make format      # Formata com ruff (auto-fix)
+make lint        # Verifica erros (ruff check)
+make pre-commit  # format → lint → test (sequencial)
 ```
 
----
-
-## Execução com Docker
-
-```bash
-# Build da imagem
-docker build -t churn-api .
-
-# Executa o container
-docker run -p 8000:8000 churn-api
-```
+O CI/CD (`.github/workflows/CI.yml`) executa automaticamente `ruff check`, `ruff format --check` e `pytest` em todo push e pull request para `main`.
 
 ---
 
 ## Arquitetura de Deploy
 
-### Modo escolhido: Real-time (Online Inference)
+### Modo implementado: Real-time (Online Inference)
 
-A API foi implementada em modo **real-time (online inference)** via FastAPI, onde cada requisição resulta em uma predição imediata e síncrona.
+A API serve predições **síncronas e individuais** via `POST /api/v1/predict`.
 
-**Justificativa:**
-- O caso de uso exige acionamento rápido da equipe de retenção no momento em que o cliente apresenta sinal de risco (ex.: abertura de chamado, consulta de planos concorrentes).
-- A latência de inferência do MLP é < 50 ms por requisição, viável para integração com CRM em tempo real.
-- O volume de requisições é baixo (poucos milhares de clientes/dia), sem necessidade de processamento batch.
+**Justificativa:** O caso de uso exige acionamento imediato da equipe de retenção no momento em que um evento de risco é detectado (ex.: consulta de planos concorrentes, abertura de chamado). A latência de inferência do MLP é < 50 ms por requisição — viável para integração direta com CRM em tempo real. O volume de requisições (poucos milhares de clientes/dia) não justifica processamento batch.
 
-**Alternativa batch (descartada):** Um pipeline batch diário seria adequado se o objetivo fosse apenas gerar listas de risco para campanhas de e-mail. Nesse cenário, a latência não importa, mas perde-se a capacidade de reagir a eventos em tempo real.
+**Alternativa batch (descartada para este escopo):** Adequada para campanhas diárias de e-mail, mas perde a capacidade de reagir a eventos em tempo real. O [`docs/monitoring_plan.md`](docs/monitoring_plan.md) documenta a arquitetura batch para escenários futuros.
 
-### Componentes da arquitetura
+### Fluxo de inferência
 
 ```
-Cliente (CRM) → POST /api/v1/predict
-                    ↓
-              FastAPI (main.py)
-                    ↓
-         LatencyMiddleware (UUID, tempo)
-                    ↓
-           ChurnPredictor (predictor.py)
-            ↓                    ↓
-  preprocessor.pkl         best_model_mlp.pt
-  (ColumnTransformer)      (ChurnMLPInference)
-            ↓                    ↓
-     SemanticNormalizer     Forward pass (30 → 128 → 64 → 1)
-     FeatureEngineer        sigmoid → probabilidade
-            ↓                    ↓
-                   ChurnResponse (JSON)
+Cliente (CRM)  →  POST /api/v1/predict
+                        │
+               FastAPI (main.py)
+                        │
+          LatencyMiddleware (UUID · tempo ms)
+                        │
+             ChurnPredictor (predictor.py)
+              ┌──────────────────────┐
+              │                      │
+   preprocessor.pkl           best_model_mlp.pt
+   ColumnTransformer           ChurnMLPInference
+              │                      │
+   SemanticNormalizer           forward pass
+   FeatureEngineer            [30 → 128 → 64 → 1]
+   30 features                  sigmoid → proba
+              └──────────────────────┘
+                        │
+               ChurnResponse (JSON)
+          {probability · label · threshold · cost}
 ```
 
-### Pipeline de dados (offline)
+---
 
-```
-data/raw/ (xlsx)
-    ↓ [notebooks/2_vab_preprocessing.ipynb]
-data/interim/ (parquet tipado + limpo)
-    ↓ [SemanticNormalizer + FeatureEngineer + ColumnTransformer]
-data/processed/ (train.parquet + test.parquet)
-    ↓ [notebooks/4_vab_mlp_vs_baselines.ipynb + MLflow]
-models/ (best_model_mlp.pt + preprocessor.pkl)
-    ↓
-API (src/)
-```
+## Boas Práticas Implementadas
+
+| Prática | Implementação |
+|---------|---------------|
+| **Reprodutibilidade** | `RANDOM_STATE = 42` em numpy, random, sklearn, torch, torch.cuda |
+| **Validação cruzada estratificada** | `StratifiedKFold(5)`, OOF collection em todos os modelos |
+| **Logging estruturado** | `get_logger()` — console + arquivo, sem `print()` no `src/` |
+| **Linting** | `ruff check` + `ruff format` — CI bloqueia PRs com erros |
+| **Seeds fixados** | Aplicados em todas as etapas: split, CV, Optuna sampler, DataLoader |
+| **Pipeline sklearn** | Fit apenas no treino; `preprocessor.pkl` garante consistência treino→inferência |
+| **Testes automatizados** | 12 arquivos, cobertura de smoke, schema, API, unit, integração |
+| **Single source of truth** | `src/config.py` centraliza todas as constantes do projeto |
 
 ---
 
@@ -258,19 +474,13 @@ API (src/)
 
 | Documento | Descrição |
 |-----------|-----------|
-| [Model Card](docs/model_card.md) | Performance, limitações, vieses e cenários de falha |
-| [Plano de Monitoramento](docs/monitoring_plan.md) | Métricas, alertas e playbook de incidentes |
-| [ML Canvas](docs/ml_canvas.md) | Formulação do problema e stakeholders |
-| [EDA](docs/analise_eda.md) | Análise exploratória dos dados |
-| [Trade-off de Custo](docs/tradeoff%20custo%20fp%20fp.md) | Análise FP vs FN com CLV |
-
----
-
-## Dataset
-
-**IBM Telco Customer Churn** (público) — 7.043 clientes, 33 variáveis, 26,4% de taxa de churn.
-
-Fonte: [Kaggle — Telco Customer Churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)
+| [`docs/model_card.md`](docs/model_card.md) | Performance, limitações, vieses e cenários de falha do modelo |
+| [`docs/monitoring_plan.md`](docs/monitoring_plan.md) | SLOs, alertas P1–P4, playbooks de incidentes, critérios de retreinamento |
+| [`docs/ml_canvas.md`](docs/ml_canvas.md) | ML Canvas — stakeholders, problema, métricas de negócio |
+| [`docs/metricas_tecnicas_negocios.md`](docs/metricas_tecnicas_negocios.md) | Hierarquia de métricas e alinhamento com negócio |
+| [`docs/tradeoff custo fp fp.md`](docs/tradeoff%20custo%20fp%20fp.md) | Análise completa da assimetria FP/FN com CLV por segmento |
+| [`docs/analise_eda.md`](docs/analise_eda.md) | Síntese da análise exploratória |
+| [`docs/analise_3_baseline.md`](docs/analise_3_baseline.md) | Resultados detalhados dos modelos baseline |
 
 ---
 
@@ -278,10 +488,13 @@ Fonte: [Kaggle — Telco Customer Churn](https://www.kaggle.com/datasets/blastch
 
 | Biblioteca | Versão | Uso |
 |------------|--------|-----|
-| PyTorch | ≥ 2.11 | Treinamento e inferência do MLP |
-| Scikit-Learn | ≥ 1.4 | Pipelines de pré-processamento e baselines |
-| MLflow | ≥ 3.0 | Rastreamento de experimentos |
-| FastAPI | ≥ 0.135 | API de inferência |
-| Optuna | ≥ 4.8 | Otimização de hiperparâmetros |
+| `torch` | ≥ 2.11 | Treinamento e inferência da MLP |
+| `scikit-learn` | ≥ 1.4 | Pipelines de pré-processamento e baselines |
+| `mlflow` | ≥ 3.0 | Rastreamento de experimentos e Model Registry |
+| `fastapi` | ≥ 0.135 | API de inferência |
+| `optuna` | ≥ 4.8 | Otimização de hiperparâmetros (50 trials/modelo) |
+| `imbalanced-learn` | ≥ 0.14 | Tratamento de desbalanceamento de classes |
+| `pandera` | ≥ 0.31 | Validação de schema em testes |
+| `ruff` | ≥ 0.15 | Linting e formatação |
 
-Veja todas as dependências em [pyproject.toml](pyproject.toml).
+Todas as dependências com versões exatas em [`pyproject.toml`](pyproject.toml) e travadas em [`uv.lock`](uv.lock).
