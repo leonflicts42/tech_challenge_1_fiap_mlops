@@ -42,7 +42,7 @@ from config import (
 )
 from data.features import FeatureEngineer
 from data.preprocessing import SemanticNormalizer
-from models.mlp2 import ChurnMLPInference
+from models.mlp import ChurnMLPInference
 
 logger: logging.Logger = get_logger(__name__)
 

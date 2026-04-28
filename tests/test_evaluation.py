@@ -30,7 +30,9 @@ def metrics(y_true: np.ndarray, y_proba: np.ndarray) -> ModelMetrics:
 
 
 class TestMetricsCalculator:
-    def test_compute_retorna_model_metrics(self, y_true: np.ndarray, y_proba: np.ndarray) -> None:
+    def test_compute_retorna_model_metrics(
+        self, y_true: np.ndarray, y_proba: np.ndarray
+    ) -> None:
         calc = MetricsCalculator(threshold=0.5)
         result = calc.compute("model_a", y_true, y_proba)
         assert isinstance(result, ModelMetrics)
@@ -45,7 +47,9 @@ class TestMetricsCalculator:
     def test_f1_entre_0_e_1(self, metrics: ModelMetrics) -> None:
         assert 0.0 <= metrics.f1 <= 1.0
 
-    def test_matriz_confusao_soma_correta(self, metrics: ModelMetrics, y_true: np.ndarray) -> None:
+    def test_matriz_confusao_soma_correta(
+        self, metrics: ModelMetrics, y_true: np.ndarray
+    ) -> None:
         assert metrics.tn + metrics.fp + metrics.fn + metrics.tp == len(y_true)
 
     def test_specificity_calculada(self, metrics: ModelMetrics) -> None:
@@ -53,10 +57,22 @@ class TestMetricsCalculator:
 
     def test_to_dict_tem_campos_obrigatorios(self, metrics: ModelMetrics) -> None:
         d = metrics.to_dict()
-        for key in ["model", "ROC-AUC", "PR-AUC", "F1", "Recall", "TN", "FP", "FN", "TP"]:
+        for key in [
+            "model",
+            "ROC-AUC",
+            "PR-AUC",
+            "F1",
+            "Recall",
+            "TN",
+            "FP",
+            "FN",
+            "TP",
+        ]:
             assert key in d
 
-    def test_threshold_alto_aumenta_especificidade(self, y_true: np.ndarray, y_proba: np.ndarray) -> None:
+    def test_threshold_alto_aumenta_especificidade(
+        self, y_true: np.ndarray, y_proba: np.ndarray
+    ) -> None:
         calc_alto = MetricsCalculator(threshold=0.95)
         m = calc_alto.compute("high_threshold", y_true, y_proba)
         assert m.fp == 0
@@ -89,9 +105,17 @@ class TestCostAnalyzer:
     def test_cost_total_formula(self) -> None:
         cfg = CostConfig(fp_cost=10.0, fn_cost=100.0)
         m = ModelMetrics(
-            name="test", roc_auc=0.9, pr_auc=0.8, f1=0.7,
-            precision=0.8, recall=0.7, specificity=0.9,
-            tn=50, fp=5, fn=2, tp=10,
+            name="test",
+            roc_auc=0.9,
+            pr_auc=0.8,
+            f1=0.7,
+            precision=0.8,
+            recall=0.7,
+            specificity=0.9,
+            tn=50,
+            fp=5,
+            fn=2,
+            tp=10,
         )
         CostAnalyzer(cfg).annotate(m)
         assert m.cost_total == pytest.approx(5 * 10.0 + 2 * 100.0)
@@ -99,9 +123,17 @@ class TestCostAnalyzer:
     def test_churn_avoided_formula(self) -> None:
         cfg = CostConfig(clv_per_customer=1000.0, retention_cost=50.0)
         m = ModelMetrics(
-            name="test", roc_auc=0.9, pr_auc=0.8, f1=0.7,
-            precision=0.8, recall=0.7, specificity=0.9,
-            tn=50, fp=5, fn=2, tp=10,
+            name="test",
+            roc_auc=0.9,
+            pr_auc=0.8,
+            f1=0.7,
+            precision=0.8,
+            recall=0.7,
+            specificity=0.9,
+            tn=50,
+            fp=5,
+            fn=2,
+            tp=10,
         )
         CostAnalyzer(cfg).annotate(m)
         assert m.churn_avoided == pytest.approx(10 * (1000.0 - 50.0))
@@ -122,7 +154,9 @@ class TestCostAnalyzer:
         assert "ROI" in df.columns
 
     def test_tradeoff_summary_ordena_por_net_value(self) -> None:
-        cfg = CostConfig(fp_cost=10.0, fn_cost=100.0, clv_per_customer=1000.0, retention_cost=50.0)
+        cfg = CostConfig(
+            fp_cost=10.0, fn_cost=100.0, clv_per_customer=1000.0, retention_cost=50.0
+        )
         analyzer = CostAnalyzer(cfg)
         m_bom = ModelMetrics("Bom", 0.95, 0.9, 0.85, 0.9, 0.85, 0.95, 50, 2, 1, 15)
         m_ruim = ModelMetrics("Ruim", 0.7, 0.6, 0.5, 0.6, 0.5, 0.7, 30, 20, 10, 5)

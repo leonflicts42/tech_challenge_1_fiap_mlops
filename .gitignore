@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -212,10 +210,9 @@ __marimo__/
 mlartifacts/
 mlruns/
 
-# banco SQLite do MLflow — vai para o repositório (leve, rastreia metadata)
-!mlflow.dbmlflow.db
-
-mlflow.db
+#é mantido no repositório (metadados leves de experimentos)
+.mlflow/
+mlflow.db 
 
 .claudeignore
 .claude

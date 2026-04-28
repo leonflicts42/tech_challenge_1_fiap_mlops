@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -16,6 +15,7 @@ from api.schemas import ChurnRequest
 
 
 # ── Fixture: predictor com internals mockados ─────────────────────────────────
+
 
 @pytest.fixture
 def mock_predictor(valid_payload: dict) -> ChurnPredictor:
@@ -53,11 +53,13 @@ def churn_request(valid_payload: dict) -> ChurnRequest:
 
 # ── Testes do pipeline predict() ──────────────────────────────────────────────
 
+
 class TestChurnPredictorPredict:
     def test_predict_retorna_churn_response(
         self, mock_predictor: ChurnPredictor, churn_request: ChurnRequest
     ) -> None:
         from api.schemas import ChurnResponse
+
         result = mock_predictor.predict(churn_request)
         assert isinstance(result, ChurnResponse)
 
@@ -127,6 +129,7 @@ class TestChurnPredictorPredict:
         self, mock_predictor: ChurnPredictor, churn_request: ChurnRequest
     ) -> None:
         from scipy.sparse import csr_matrix
+
         mock_predictor._preprocessor.transform.return_value = csr_matrix(
             np.zeros((1, 30))
         )
@@ -144,8 +147,11 @@ class TestChurnPredictorPredict:
 
 # ── Testes do carregamento de threshold ──────────────────────────────────────
 
+
 class TestLoadThreshold:
-    def test_threshold_default_quando_sem_arquivos(self, mock_predictor: ChurnPredictor) -> None:
+    def test_threshold_default_quando_sem_arquivos(
+        self, mock_predictor: ChurnPredictor
+    ) -> None:
         with (
             patch("api.predictor.MODELS_DIR") as mock_dir,
             patch("api.predictor.PROJECT_ROOT") as mock_root,
@@ -155,7 +161,9 @@ class TestLoadThreshold:
             result = mock_predictor._load_threshold(0.42)
         assert result == 0.42
 
-    def test_threshold_carregado_de_optuna(self, tmp_path: Path, mock_predictor: ChurnPredictor) -> None:
+    def test_threshold_carregado_de_optuna(
+        self, tmp_path: Path, mock_predictor: ChurnPredictor
+    ) -> None:
         optuna_file = tmp_path / "optuna_best_params_01.json"
         optuna_file.write_text(json.dumps({"threshold": 0.23}))
 
@@ -182,6 +190,7 @@ class TestLoadThreshold:
 
 # ── Testes do FileNotFoundError ───────────────────────────────────────────────
 
+
 class TestChurnPredictorFileNotFound:
     def test_preprocessor_nao_encontrado_levanta_file_not_found(self) -> None:
         with pytest.raises(FileNotFoundError):
@@ -194,6 +203,7 @@ class TestChurnPredictorFileNotFound:
         fake_pkl = tmp_path / "preprocessor.pkl"
         import joblib
         import sklearn.preprocessing
+
         joblib.dump(sklearn.preprocessing.StandardScaler(), fake_pkl)
 
         with pytest.raises(FileNotFoundError):
@@ -204,6 +214,7 @@ class TestChurnPredictorFileNotFound:
 
 
 # ── Testes do monkey-patch sklearn ───────────────────────────────────────────
+
 
 class TestPatchedCheckUnknown:
     def test_retorna_diff_quando_type_error(self) -> None:

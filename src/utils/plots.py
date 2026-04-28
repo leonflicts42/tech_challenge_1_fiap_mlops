@@ -311,7 +311,14 @@ def plot_all_pr_curves(
         PrecisionRecallDisplay.from_predictions(y_true, y_proba, ax=ax, name=model_name)
 
     baseline = y_true.mean()
-    ax.axhline(y=baseline, color="k", linestyle="--", lw=1, alpha=0.5, label=f"Baseline ({baseline:.2f})")
+    ax.axhline(
+        y=baseline,
+        color="k",
+        linestyle="--",
+        lw=1,
+        alpha=0.5,
+        label=f"Baseline ({baseline:.2f})",
+    )
     ax.set_title(title)
     ax.legend(fontsize=9)
     ax.grid(alpha=0.3)
@@ -354,7 +361,10 @@ def plot_confusion_matrix_grid(
 
     for ax, (model_name, y_pred) in zip(axes, models_preds.items()):
         ConfusionMatrixDisplay.from_predictions(
-            y_true, y_pred, ax=ax, colorbar=False,
+            y_true,
+            y_pred,
+            ax=ax,
+            colorbar=False,
             display_labels=["Não Churn", "Churn"],
         )
         ax.set_title(model_name, fontweight="bold")
@@ -402,11 +412,12 @@ def plot_classification_report_grid(
     axes = np.array(axes).flatten()
 
     metrics_order = ["precision", "recall", "f1-score"]
-    labels_order = ["0", "1", "macro avg", "weighted avg"]
+    # labels_order = ["0", "1", "macro avg", "weighted avg"]
 
     for ax, (model_name, y_pred) in zip(axes, models_preds.items()):
         report = classification_report(
-            y_true, y_pred,
+            y_true,
+            y_pred,
             target_names=["Não Churn (0)", "Churn (1)"],
             output_dict=True,
         )
@@ -417,7 +428,9 @@ def plot_classification_report_grid(
 
         df_report = _pd.DataFrame(rows).T
 
-        im = ax.imshow(df_report.values.astype(float), vmin=0, vmax=1, cmap="RdYlGn", aspect="auto")
+        im = ax.imshow(
+            df_report.values.astype(float), vmin=0, vmax=1, cmap="RdYlGn", aspect="auto"
+        )
         ax.set_xticks(range(len(metrics_order)))
         ax.set_xticklabels(metrics_order, rotation=30, ha="right", fontsize=9)
         ax.set_yticks(range(len(df_report)))
@@ -426,8 +439,15 @@ def plot_classification_report_grid(
         for i in range(len(df_report)):
             for j in range(len(metrics_order)):
                 val = df_report.values[i, j]
-                ax.text(j, i, f"{val:.3f}", ha="center", va="center",
-                        fontsize=9, color="black")
+                ax.text(
+                    j,
+                    i,
+                    f"{val:.3f}",
+                    ha="center",
+                    va="center",
+                    fontsize=9,
+                    color="black",
+                )
 
         ax.set_title(model_name, fontweight="bold", fontsize=11)
         fig.colorbar(im, ax=ax, shrink=0.8)

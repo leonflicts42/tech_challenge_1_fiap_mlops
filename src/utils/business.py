@@ -30,10 +30,10 @@ from config import (
 logger = logging.getLogger(__name__)
 
 # Valores de negócio por célula da matriz de confusão (derivados de config)
-VALUE_TP: float = COST_CLV           # churner detectado → retenção bem-sucedida
-VALUE_TN: float = COST_RETENTION     # não-churner ignorado → economia operacional
-VALUE_FN: float = -COST_CLV          # churner perdido → cancelamento
-VALUE_FP: float = -COST_RETENTION    # ação desnecessária → custo desperdiçado
+VALUE_TP: float = COST_CLV  # churner detectado → retenção bem-sucedida
+VALUE_TN: float = COST_RETENTION  # não-churner ignorado → economia operacional
+VALUE_FN: float = -COST_CLV  # churner perdido → cancelamento
+VALUE_FP: float = -COST_RETENTION  # ação desnecessária → custo desperdiçado
 
 
 def business_value(
@@ -110,14 +110,14 @@ def find_best_threshold(
             slo_recall_min,
         )
         for t in thresholds:
-            val = business_value(y_true, y_proba, t, value_tp, value_tn, value_fn, value_fp)
+            val = business_value(
+                y_true, y_proba, t, value_tp, value_tn, value_fn, value_fp
+            )
             if val > best_val:
                 best_val = val
                 best_t = float(t)
 
-    logger.debug(
-        "find_best_threshold | best_t=%.2f | best_val=%.0f", best_t, best_val
-    )
+    logger.debug("find_best_threshold | best_t=%.2f | best_val=%.0f", best_t, best_val)
     return best_t, best_val
 
 

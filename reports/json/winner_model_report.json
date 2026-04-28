@@ -1,6 +1,6 @@
 {
   "model": "MLP",
-  "timestamp": "2026-04-25T19:47:07.935236",
+  "timestamp": "2026-04-26T06:17:57.581181",
   "best_params": {
     "n_layers": 2,
     "dim_0": 128,

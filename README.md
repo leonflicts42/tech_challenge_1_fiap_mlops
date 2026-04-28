@@ -128,7 +128,7 @@ Features removidas: IDs geográficos, e variáveis pós-evento que causariam dat
 | Requisito | Entregável |
 |-----------|-----------|
 | Model Card (performance, limitações, vieses, falhas) | [`docs/model_card.md`](docs/model_card.md) |
-| Arquitetura de deploy (batch vs real-time + justificativa) | Seção [Arquitetura de Deploy](#arquitetura-de-deploy) neste README |
+| Arquitetura de deploy (batch vs real-time + justificativa) | [`docs/deploy_architecture.md`](docs/deploy_architecture.md) + seção [Arquitetura de Deploy](#arquitetura-de-deploy) |
 | Plano de monitoramento (métricas, alertas, playbook) | [`docs/monitoring_plan.md`](docs/monitoring_plan.md) |
 | README completo | Este arquivo |
 
@@ -217,25 +217,7 @@ models/ (best_model_mlp.pt · preprocessor.pkl)
 
 ## Instalação e Setup
 
-**Requisitos:** Python 3.12+ · Git
-
-### Com pip
-
-```bash
-# 1. Clone o repositório
-git clone https://github.com/leonflicts42/tech_challenge_1_fiap_mlops.git
-cd tech_challenge_1_fiap_mlops
-
-# 2. Crie e ative o ambiente virtual
-python -m venv .venv
-source .venv/bin/activate          # Linux/Mac
-.venv\Scripts\Activate.ps1         # PowerShell (Windows)
-
-# 3. Instale o projeto em modo editável
-pip install -e .
-```
-
-### Com uv (recomendado — reprodutível via uv.lock)
+**Requisitos:** Python 3.12+ · Git · [uv](https://docs.astral.sh/uv/)
 
 ```bash
 git clone https://github.com/leonflicts42/tech_challenge_1_fiap_mlops.git
@@ -310,25 +292,40 @@ curl -X POST http://localhost:8000/api/v1/predict \
 
 ## Executando com Docker
 
+### Pré-requisito — artefatos do modelo
+
+Antes de buildar, confirme que os artefatos existem localmente:
+
+```bash
+ls models/best_model_mlp.pt models/preprocessor.pkl
+```
+
+Se não existirem, execute o treinamento primeiro:
+
+```bash
+uv run python src/train_mlp.py
+```
+
 ### Build e execução local
 
 ```bash
 # Build da imagem
 docker build -t churn-api .
 
-# Executar o container (porta 5000)
-docker run -p 5000:5000 churn-api
+# Executar em background (porta 5000)
+docker run -d --name churn-api -p 5000:5000 churn-api
 ```
 
 A API ficará disponível em http://localhost:5000/docs
 
-### Passando os artefatos do modelo para o container
+### Passando os artefatos do modelo como volume
 
-Por padrão, os artefatos (`models/best_model_mlp.pt` e `models/preprocessor.pkl`) são copiados para dentro da imagem no `docker build`. Se quiser montar um volume externo para facilitar atualizações de modelo sem rebuild:
+Por padrão, os artefatos (`models/best_model_mlp.pt` e `models/preprocessor.pkl`) são copiados para dentro da imagem no `docker build`. Para atualizar o modelo sem rebuild, monte um volume externo:
 
 ```bash
-docker run -p 5000:5000 \
-  -v $(pwd)/models:/app/models \
+docker run -d --name churn-api \
+  -p 5000:5000 \
+  -v $(pwd)/models:/app/models:ro \
   churn-api
 ```
 
@@ -348,6 +345,52 @@ Resposta esperada:
   "model_version": "best_model_mlp.pt",
   "threshold": 0.16
 }
+```
+
+### Testar uma predição
+
+```bash
+curl -X POST http://localhost:5000/api/v1/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gender": "Female",
+    "senior_citizen": 0,
+    "partner": "Yes",
+    "dependents": "No",
+    "tenure_months": 12,
+    "phone_service": "Yes",
+    "multiple_lines": "No",
+    "internet_service": "Fiber optic",
+    "online_security": "No",
+    "online_backup": "No",
+    "device_protection": "No",
+    "tech_support": "No",
+    "streaming_tv": "No",
+    "streaming_movies": "No",
+    "contract": "Month-to-month",
+    "paperless_billing": "Yes",
+    "payment_method": "Electronic check",
+    "monthly_charges": 70.35,
+    "total_charges": 844.20
+  }'
+```
+
+Resposta esperada:
+
+```json
+{
+  "churn_probability": 0.87,
+  "churn_label": "churn",
+  "threshold_used": 0.16,
+  "cost_estimate_brl": 73.52,
+  "model_version": "best_model_mlp.pt"
+}
+```
+
+### Parar o container
+
+```bash
+docker stop churn-api && docker rm churn-api
 ```
 
 ---
@@ -475,6 +518,7 @@ Cliente (CRM)  →  POST /api/v1/predict
 | Documento | Descrição |
 |-----------|-----------|
 | [`docs/model_card.md`](docs/model_card.md) | Performance, limitações, vieses e cenários de falha do modelo |
+| [`docs/deploy_architecture.md`](docs/deploy_architecture.md) | ADR completo: batch vs real-time, fluxo de inferência, containerização, opções de nuvem |
 | [`docs/monitoring_plan.md`](docs/monitoring_plan.md) | SLOs, alertas P1–P4, playbooks de incidentes, critérios de retreinamento |
 | [`docs/ml_canvas.md`](docs/ml_canvas.md) | ML Canvas — stakeholders, problema, métricas de negócio |
 | [`docs/metricas_tecnicas_negocios.md`](docs/metricas_tecnicas_negocios.md) | Hierarquia de métricas e alinhamento com negócio |
