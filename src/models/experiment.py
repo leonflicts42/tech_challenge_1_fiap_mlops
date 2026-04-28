@@ -24,14 +24,14 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 # Importações internas — assumem que o pacote está instalado (pip install -e .)
-from churn_telecom.models.evaluation import (
+from models.evaluation import (
     CostAnalyzer,
     CostConfig,
     MetricsCalculator,
     ModelComparator,
 )
-from churn_telecom.models.mlp import build_mlp
-from churn_telecom.models.trainer import ChurnTrainer, TrainerConfig
+from models.mlp import ChurnMLPv2
+from models.trainer import ChurnTrainer, TrainerConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -160,7 +160,7 @@ def _train_mlp(
             }
         )
 
-        model = build_mlp(
+        model = ChurnMLPv2(
             input_dim=input_dim,
             hidden_dims=mlp_cfg["hidden_dims"],
             dropout=mlp_cfg["dropout"],

@@ -1,11 +1,4 @@
-"""
-Testes automatizados — Etapa 2.
-
-FIXES aplicados nesta versão:
-  1. build_mlp() chamado com device="cpu" explícito (4º arg é device, não seed)
-  2. verbose= removido do ReduceLROnPlateau (corrigido no trainer.py)
-  3. Todos os testes usam apenas CPU — sem dependência de GPU
-"""
+"""Testes para EarlyStopping e ChurnTrainer — models/trainer.py."""
 
 from __future__ import annotations
 
@@ -13,14 +6,8 @@ import numpy as np
 import pytest
 import torch
 
-from churn_telecom.models.evaluation import (
-    CostAnalyzer,
-    CostConfig,
-    MetricsCalculator,
-    ModelComparator,
-)
-from churn_telecom.models.mlp import build_mlp
-from churn_telecom.models.trainer import ChurnTrainer, EarlyStopping, TrainerConfig
+from models.mlp import ChurnMLPv2
+from models.trainer import ChurnTrainer, EarlyStopping, TrainerConfig
 
 # ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -51,8 +38,7 @@ def split_data(synthetic_data):
 
 @pytest.fixture
 def small_model():
-    # FIX: 4º argumento é device — passar "cpu", não SEED (42)
-    return build_mlp(INPUT_DIM, [16, 8], 0.0, DEVICE)
+    return ChurnMLPv2(input_dim=INPUT_DIM, hidden_dims=[16, 8], dropout=0.0).to(DEVICE)
 
 
 @pytest.fixture
@@ -89,10 +75,8 @@ class TestEarlyStopping:
         es = EarlyStopping(patience=2, min_delta=1e-4)
         es.step(1.0, small_model)  # salva estado atual como melhor
 
-        # Captura soma dos pesos antes da corrupção
         before = sum(p.abs().sum().item() for p in small_model.parameters())
 
-        # Corrompe pesos manualmente
         with torch.no_grad():
             for p in small_model.parameters():
                 p.fill_(999.0)
@@ -167,8 +151,7 @@ class TestChurnTrainer:
 
     def test_early_stopping_flag(self):
         """Com patience=1, o treino deve parar antes de 20 épocas."""
-        # FIX: 4º arg é device — "cpu", não SEED
-        model = build_mlp(INPUT_DIM, [8], 0.0, DEVICE)
+        model = ChurnMLPv2(input_dim=INPUT_DIM, hidden_dims=[8], dropout=0.0).to(DEVICE)
         cfg = TrainerConfig(epochs=20, patience=1, lr=1e-3, device=DEVICE, seed=SEED)
         rng = np.random.default_rng(SEED)
         X = rng.standard_normal((200, INPUT_DIM)).astype(np.float32)
@@ -178,103 +161,3 @@ class TestChurnTrainer:
         assert len(history.train_loss) <= 20, (
             "com patience=1, o treino deve respeitar o limite máximo de épocas"
         )
-
-
-# ── MetricsCalculator ─────────────────────────────────────────────────────────
-
-
-class TestMetricsCalculator:
-    def test_perfect_classifier(self):
-        calc = MetricsCalculator(threshold=0.5)
-        y_true = np.array([0, 0, 1, 1])
-        y_proba = np.array([0.1, 0.1, 0.9, 0.9])
-        m = calc.compute("perfect", y_true, y_proba)
-        assert m.roc_auc == pytest.approx(1.0)
-        assert m.recall == pytest.approx(1.0)
-        assert m.fn == 0
-        assert m.tp == 2
-
-    def test_worst_classifier(self):
-        calc = MetricsCalculator(threshold=0.5)
-        y_true = np.array([0, 0, 1, 1])
-        y_proba = np.array([0.9, 0.9, 0.1, 0.1])
-        m = calc.compute("worst", y_true, y_proba)
-        assert m.tp == 0
-        assert m.fn == 2
-
-    def test_specificity_is_tn_rate(self):
-        calc = MetricsCalculator(threshold=0.5)
-        y_true = np.array([0, 0, 0, 1, 1, 1])
-        y_proba = np.array([0.1, 0.1, 0.9, 0.9, 0.9, 0.9])
-        m = calc.compute("test", y_true, y_proba)
-        expected = m.tn / (m.tn + m.fp)
-        assert m.specificity == pytest.approx(expected)
-
-
-# ── CostAnalyzer ─────────────────────────────────────────────────────────────
-
-
-class TestCostAnalyzer:
-    def test_cost_formula(self):
-        """cost_total deve ser FP * fp_cost + FN * fn_cost."""
-        cfg = CostConfig(
-            fp_cost=100.0,
-            fn_cost=1000.0,
-            clv_per_customer=1200.0,
-            retention_cost=100.0,
-        )
-        analyzer = CostAnalyzer(cfg)
-        calc = MetricsCalculator()
-        y_true = np.array([0, 0, 1, 1])
-        y_proba = np.array([0.9, 0.1, 0.1, 0.9])  # 1 FP, 1 FN
-        m = analyzer.annotate(calc.compute("test", y_true, y_proba))
-        assert m.cost_total == pytest.approx(m.fp * 100.0 + m.fn * 1000.0)
-
-    def test_net_positive_for_good_model(self):
-        """Modelo preciso deve ter net_value positivo."""
-        cfg = CostConfig()
-        analyzer = CostAnalyzer(cfg)
-        calc = MetricsCalculator()
-        y_true = np.array([0] * 80 + [1] * 20)
-        y_proba = np.concatenate([np.full(80, 0.1), np.full(20, 0.9)])
-        m = analyzer.annotate(calc.compute("good", y_true, y_proba))
-        net = m.churn_avoided - m.cost_total
-        assert net > 0, "modelo preciso deve ter net_value positivo"
-
-
-# ── ModelComparator ───────────────────────────────────────────────────────────
-
-
-class TestModelComparator:
-    def _make_metrics(self, name: str, auc: float):
-        from churn_telecom.models.evaluation import ModelMetrics
-
-        return ModelMetrics(
-            name=name,
-            roc_auc=auc,
-            pr_auc=auc,
-            f1=auc,
-            precision=auc,
-            recall=auc,
-            specificity=auc,
-            tn=10,
-            fp=5,
-            fn=3,
-            tp=8,
-        )
-
-    def test_summary_ordered_by_auc(self):
-        comp = ModelComparator()
-        comp.add(self._make_metrics("A", 0.70))
-        comp.add(self._make_metrics("B", 0.85))
-        comp.add(self._make_metrics("C", 0.60))
-        df = comp.summary()
-        assert list(df["model"]) == ["B", "A", "C"], (
-            "tabela deve estar ordenada por ROC-AUC decrescente"
-        )
-
-    def test_best_model_name(self):
-        comp = ModelComparator()
-        comp.add(self._make_metrics("Dummy", 0.50))
-        comp.add(self._make_metrics("MLP", 0.88))
-        assert comp.best_model_name() == "MLP"

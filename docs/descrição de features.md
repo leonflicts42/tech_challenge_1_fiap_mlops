@@ -78,3 +78,54 @@ Criar um modelo de machine learning para prever o churn de cliente no proximo m�
 **CLTV**: Customer Lifetime Value (Valor do Tempo de Vida do Cliente). O CLTV previsto é calculado usando fórmulas corporativas e dados existentes. Quanto maior o valor, mais valioso é o cliente. Clientes de alto valor devem ser monitorados quanto ao risco de churn.
  
 **Churn Reason**: O motivo específico do cliente para deixar a empresa. Diretamente relacionado à Churn Category.
+
+>>
+cols_drop = COLS_ID + COLS_POS + [LABEL_COL]
+COLS_ID: list[str] = [
+    "CustomerID",
+    "Count",
+    "Country",
+    "State",
+    "City",
+    "Zip Code",
+    "Lat Long",
+    "Latitude",
+    "Longitude",
+]
+
+# Colunas geradas APÓS o evento de churn — data leakage, removidas no cleaning
+COLS_POS: list[str] = [
+    "Churn Score",
+    "CLTV",
+    "Churn Reason",
+]
+
+# Features numéricas contínuas do dataset original
+COLS_NUM: list[str] = [
+    "Tenure Months",
+    "Monthly Charges",
+    "Total Charges",
+]
+
+# Features categóricas do dataset original
+COLS_CAT: list[str] = [
+    "Gender",
+    "Senior Citizen",
+    "Partner",
+    "Dependents",
+    "Phone Service",
+    "Multiple Lines",
+    "Internet Service",
+    "Online Security",
+    "Online Backup",
+    "Device Protection",
+    "Tech Support",
+    "Streaming TV",
+    "Streaming Movies",
+    "Contract",
+    "Paperless Billing",
+    "Payment Method",
+]
+>>
+shape final: (7043, 18) | colunas: ['Senior Citizen', 'Partner', 'Dependents', 'Tenure Months', 'Multiple Lines', 'Internet Service', 'Online Security', 'Online Backup', 'Device Protection', 'Tech Support', 'Streaming TV', 'Streaming Movies', 'Contract', 'Paperless Billing', 'Payment Method', 'Monthly Charges', 'Total Charges', 'Churn Value']
+

@@ -22,3 +22,23 @@ build/
 
 # Environment secrets
 .env
+
+
+# Dados (Geralmente montados via volume ou baixados via S3/DVC)
+data/
+models/*.pt
+models/*.pkl
+models/checkpoints/
+
+# Documentação e Relatórios (Ocupam espaço e não são necessários na API)
+docs/
+reports/
+notebooks/
+references/
+
+# Logs
+logs/
+*.log
+
+# Arquivos de Lock de outras ferramentas (se existirem)
+requirements.txt
