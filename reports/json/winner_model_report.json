@@ -1,6 +1,6 @@
 {
   "model": "MLP",
-  "timestamp": "2026-04-26T06:17:57.581181",
+  "timestamp": "2026-04-28T00:23:58.109792+00:00",
   "best_params": {
     "n_layers": 2,
     "dim_0": 128,
@@ -14,18 +14,18 @@
     "patience": 15
   },
   "test_metrics": {
-    "roc_auc": 0.849974,
-    "pr_auc": 0.666326,
-    "recall": 0.989247,
-    "precision": 0.365079,
-    "f1": 0.533333,
+    "roc_auc": 0.85,
+    "pr_auc": 0.66,
+    "recall": 0.99,
+    "precision": 0.36,
+    "f1": 0.53,
     "tp": 368,
     "tn": 393,
     "fp": 640,
     "fn": 4,
-    "business_value": 1017420.56,
+    "business_value": 1017420.0,
     "threshold": 0.16,
-    "slo_ok": true
+    "slo_ok": false
   },
   "cost_function": {
     "TP": 2845.0,
@@ -39,7 +39,7 @@
     "n_train": 5616,
     "n_test": 1405,
     "n_features": 30,
-    "churn_rate_train": 0.26442307233810425,
-    "churn_rate_test": 0.26476868987083435
+    "churn_rate_train": 0.2644230769230769,
+    "churn_rate_test": 0.26476868327402137
   }
 }

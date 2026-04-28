@@ -663,7 +663,11 @@ def mock_train_dependencies(tmp_path: Path, minimal_params: dict, sample_metrics
         json.dumps({"MLP": {"best_params": minimal_params}}), encoding="utf-8"
     )
 
+    for p in patches:
+        p.start()
+
     yield {"history": mock_history, "trainer": mock_trainer, "mv": mock_mv}
+
     for p in patches:
         p.stop()
 
